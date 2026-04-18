@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="profile.html" class="logo">EventConnect</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Mi Cuenta</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            
+            <!-- Sección: Mis Eventos (donde participo) -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                    <h2 style="margin-bottom: 0;">🎫 Mis Eventos</h2>
+                    <span class="role-badge" id="contadorMisEventos">3 eventos</span>
+                </div>
+                <p>Eventos en los que ya estás inscrito.</p>
+
+                <div class="eventos-grid" id="misEventosGrid">
+                    
+                    <!-- Evento inscrito 1 -->
+                    <div class="evento-card evento-inscrito">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🏢 Networking</span>
+                            <span class="status-badge status-approved">Inscrito</span>
+                        </div>
+                        <h3 class="evento-titulo">Feria de Proveedores 2025</h3>
+                        <p class="evento-descripcion">Conecta con más de 50 proveedores nacionales e internacionales. Oportunidad única para establecer alianzas estratégicas...</p>
+                        <div class="evento-meta">
+                            <span>📅 15 Enero, 2025</span>
+                            <span>📍 Centro de Convenciones</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(1)">👁 Ver detalles</button>
+                            <button class="btn btn-danger" onclick="cancelarInscripcion(1)">Cancelar inscripción</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento inscrito 2 -->
+                    <div class="evento-card evento-inscrito">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🚀 Tecnología</span>
+                            <span class="status-badge status-approved">Inscrito</span>
+                        </div>
+                        <h3 class="evento-titulo">Tech Business Summit</h3>
+                        <p class="evento-descripcion">Descubre las últimas innovaciones tecnológicas para tu negocio. Startups, inversores y empresas consolidadas...</p>
+                        <div class="evento-meta">
+                            <span>📅 10 Marzo, 2025</span>
+                            <span>📍 Campus Tech Hub</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(3)">👁 Ver detalles</button>
+                            <button class="btn btn-danger" onclick="cancelarInscripcion(3)">Cancelar inscripción</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento inscrito 3 -->
+                    <div class="evento-card evento-inscrito">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🍽 Gastronomía</span>
+                            <span class="status-badge status-approved">Inscrito</span>
+                        </div>
+                        <h3 class="evento-titulo">Food Business Expo</h3>
+                        <p class="evento-descripcion">El punto de encuentro para el sector gastronómico. Productores, distribuidores y restaurantes...</p>
+                        <div class="evento-meta">
+                            <span>📅 20 Diciembre, 2024</span>
+                            <span>📍 Centro Gastronómico</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(5)">👁 Ver detalles</button>
+                            <button class="btn btn-danger" onclick="cancelarInscripcion(5)">Cancelar inscripción</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Sección: Explorar Eventos -->
+            <div class="card">
+                <h2>🔍 Explorar Eventos</h2>
+                <p>Descubre nuevos eventos y oportunidades de networking.</p>
+
+                <!-- Barra de búsqueda y filtros -->
+                <div class="eventos-filtros">
+                    <div class="busqueda-container">
+                        <input type="text" class="form-control" id="busquedaEventos" 
+                               placeholder="🔍 Buscar eventos por nombre...">
+                    </div>
+                    <div class="categorias-container">
+                        <span class="filtro-label">Filtrar por categoría:</span>
+                        <div class="categorias-tags">
+                            <button class="categoria-tag active" data-categoria="todos">Todos</button>
+                            <button class="categoria-tag" data-categoria="networking">🏢 Networking</button>
+                            <button class="categoria-tag" data-categoria="comercio">💼 Comercio</button>
+                            <button class="categoria-tag" data-categoria="tecnologia">🚀 Tecnología</button>
+                            <button class="categoria-tag" data-categoria="sostenibilidad">🌱 Sostenibilidad</button>
+                            <button class="categoria-tag" data-categoria="gastronomia">🍽 Gastronomía</button>
+                            <button class="categoria-tag" data-categoria="finanzas">💰 Finanzas</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid de eventos disponibles -->
+                <div class="eventos-grid" id="eventosDisponiblesGrid">
+                    
+                    <!-- Evento 2 -->
+                    <div class="evento-card" data-categoria="comercio" data-id="2">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">💼 Comercio</span>
+                            <span class="evento-fecha-badge">22 Feb</span>
+                        </div>
+                        <h3 class="evento-titulo">Expo Importadores Latam</h3>
+                        <p class="evento-descripcion">El evento más grande de importadores de Latinoamérica. Presenta tus productos a compradores de toda la región...</p>
+                        <div class="evento-meta">
+                            <span>📅 22 Febrero, 2025</span>
+                            <span>📍 Hotel Marriott</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>👥 120/300 inscritos</span>
+                            <span>⏱ Cierra en 15 días</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(2)">👁 Ver detalles</button>
+                            <button class="btn btn-primary" onclick="unirseEvento(2)">✨ Unirse</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento 4 -->
+                    <div class="evento-card" data-categoria="sostenibilidad" data-id="4">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🌱 Sostenibilidad</span>
+                            <span class="evento-fecha-badge">5 Abr</span>
+                        </div>
+                        <h3 class="evento-titulo">Green Commerce Forum</h3>
+                        <p class="evento-descripcion">Foro dedicado a empresas con enfoque sostenible. Aprende sobre prácticas eco-amigables y conecta con proveedores...</p>
+                        <div class="evento-meta">
+                            <span>📅 5 Abril, 2025</span>
+                            <span>📍 Parque Empresarial Verde</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>👥 89/250 inscritos</span>
+                            <span>⏱ Cierra en 45 días</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(4)">👁 Ver detalles</button>
+                            <button class="btn btn-primary" onclick="unirseEvento(4)">✨ Unirse</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento 6 - Nuevo -->
+                    <div class="evento-card" data-categoria="finanzas" data-id="6">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">💰 Finanzas</span>
+                            <span class="evento-fecha-badge">18 Ene</span>
+                        </div>
+                        <h3 class="evento-titulo">Inversores & Startups Connect</h3>
+                        <p class="evento-descripcion">Conecta directamente con inversores ángeles y fondos de capital de riesgo. Sesiones de pitch y networking exclusivo...</p>
+                        <div class="evento-meta">
+                            <span>📅 18 Enero, 2025</span>
+                            <span>📍 Torre Financiera</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>👥 75/150 inscritos</span>
+                            <span>⏱ Cierra en 8 días</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(6)">👁 Ver detalles</button>
+                            <button class="btn btn-primary" onclick="unirseEvento(6)">✨ Unirse</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento 7 - Nuevo -->
+                    <div class="evento-card" data-categoria="networking" data-id="7">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🏢 Networking</span>
+                            <span class="evento-fecha-badge">28 Feb</span>
+                        </div>
+                        <h3 class="evento-titulo">Business Breakfast Club</h3>
+                        <p class="evento-descripcion">Desayunos ejecutivos mensuales para crear conexiones de alto valor. Ambiente exclusivo con empresarios destacados...</p>
+                        <div class="evento-meta">
+                            <span>📅 28 Febrero, 2025</span>
+                            <span>📍 Club Empresarial</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>👥 25/40 inscritos</span>
+                            <span>⏱ Cierra en 20 días</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(7)">👁 Ver detalles</button>
+                            <button class="btn btn-primary" onclick="unirseEvento(7)">✨ Unirse</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento 8 - Nuevo -->
+                    <div class="evento-card" data-categoria="comercio" data-id="8">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">💼 Comercio</span>
+                            <span class="evento-fecha-badge">12 Mar</span>
+                        </div>
+                        <h3 class="evento-titulo">Rueda de Negocios Textil</h3>
+                        <p class="evento-descripcion">Especializado en el sector textil y moda. Fabricantes, diseñadores y distribuidores en un solo lugar...</p>
+                        <div class="evento-meta">
+                            <span>📅 12 Marzo, 2025</span>
+                            <span>📍 Centro de Moda</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>👥 156/200 inscritos</span>
+                            <span>⏱ Cierra en 25 días</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(8)">👁 Ver detalles</button>
+                            <button class="btn btn-primary" onclick="unirseEvento(8)">✨ Unirse</button>
+                        </div>
+                    </div>
+
+                    <!-- Evento 9 - Nuevo -->
+                    <div class="evento-card" data-categoria="tecnologia" data-id="9">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🚀 Tecnología</span>
+                            <span class="evento-fecha-badge">8 Abr</span>
+                        </div>
+                        <h3 class="evento-titulo">AI & Business Conference</h3>
+                        <p class="evento-descripcion">Descubre cómo la inteligencia artificial está transformando los negocios. Casos de éxito y oportunidades de colaboración...</p>
+                        <div class="evento-meta">
+                            <span>📅 8 Abril, 2025</span>
+                            <span>📍 Innovation Center</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>👥 210/400 inscritos</span>
+                            <span>⏱ Cierra en 48 días</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="verDetallesEvento(9)">👁 Ver detalles</button>
+                            <button class="btn btn-primary" onclick="unirseEvento(9)">✨ Unirse</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Mensaje cuando no hay resultados -->
+                <div id="sinResultados" style="display: none; text-align: center; padding: 3rem;">
+                    <p style="font-size: 3rem; margin-bottom: 1rem;">🔍</p>
+                    <p style="font-size: 1.2rem; color: var(--text-secondary);">No se encontraron eventos con esos criterios.</p>
+                    <button class="btn btn-secondary" onclick="limpiarFiltros()" style="margin-top: 1rem;">Limpiar filtros</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de detalles -->
+    <div class="modal" id="modalDetalles">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 id="modalTitulo">Detalles del Evento</h3>
+            <div id="modalContenido"></div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;" id="modalAcciones">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        // Datos de eventos (simulados)
+        const eventosData = {
+            1: {
+                titulo: "Feria de Proveedores 2025",
+                descripcion: "Conecta con más de 50 proveedores nacionales e internacionales. Oportunidad única para establecer alianzas estratégicas y conocer las últimas tendencias del mercado. El evento incluye conferencias magistrales, mesas de negociación programadas y networking exclusivo.",
+                fecha: "15 Enero, 2025",
+                hora: "9:00 AM - 6:00 PM",
+                lugar: "Centro de Convenciones de la Ciudad",
+                organizador: "Cámara de Comercio",
+                capacidad: "500 participantes",
+                inscritos: 342,
+                categoria: "Networking",
+                inscrito: true
+            },
+            2: {
+                titulo: "Expo Importadores Latam",
+                descripcion: "El evento más grande de importadores de Latinoamérica. Presenta tus productos a compradores de toda la región y expande tu negocio internacionalmente. Incluye ruedas de negocios B2B y acceso a la base de datos de importadores.",
+                fecha: "22 Febrero, 2025",
+                hora: "10:00 AM - 8:00 PM",
+                lugar: "Hotel Marriott - Salón Principal",
+                organizador: "Trade Alliance",
+                capacidad: "300 participantes",
+                inscritos: 120,
+                categoria: "Comercio",
+                inscrito: false
+            },
+            3: {
+                titulo: "Tech Business Summit",
+                descripcion: "Descubre las últimas innovaciones tecnológicas para tu negocio. Startups, inversores y empresas consolidadas en un mismo lugar para crear sinergias. Pitch sessions, demo zone y oportunidades de inversión.",
+                fecha: "10 Marzo, 2025",
+                hora: "8:00 AM - 5:00 PM",
+                lugar: "Campus Tech Hub",
+                organizador: "TechConnect Inc.",
+                capacidad: "400 participantes",
+                inscritos: 287,
+                categoria: "Tecnología",
+                inscrito: true
+            },
+            4: {
+                titulo: "Green Commerce Forum",
+                descripcion: "Foro dedicado a empresas con enfoque sostenible. Aprende sobre prácticas eco-amigables y conecta con proveedores certificados en comercio verde. Certificaciones, talleres prácticos y expo de productos sostenibles.",
+                fecha: "5 Abril, 2025",
+                hora: "9:00 AM - 4:00 PM",
+                lugar: "Parque Empresarial Verde",
+                organizador: "EcoTrade Foundation",
+                capacidad: "250 participantes",
+                inscritos: 89,
+                categoria: "Sostenibilidad",
+                inscrito: false
+            },
+            5: {
+                titulo: "Food Business Expo",
+                descripcion: "El punto de encuentro para el sector gastronómico. Productores, distribuidores y restaurantes se reúnen para crear nuevas oportunidades de negocio. Degustaciones, showcooking y ruedas de proveedores.",
+                fecha: "20 Diciembre, 2024",
+                hora: "11:00 AM - 9:00 PM",
+                lugar: "Centro Gastronómico",
+                organizador: "Gourmet Alliance",
+                capacidad: "350 participantes",
+                inscritos: 298,
+                categoria: "Gastronomía",
+                inscrito: true
+            },
+            6: {
+                titulo: "Inversores & Startups Connect",
+                descripcion: "Conecta directamente con inversores ángeles y fondos de capital de riesgo. Sesiones de pitch y networking exclusivo para emprendedores que buscan financiamiento.",
+                fecha: "18 Enero, 2025",
+                hora: "2:00 PM - 8:00 PM",
+                lugar: "Torre Financiera - Piso 25",
+                organizador: "Venture Capital Club",
+                capacidad: "150 participantes",
+                inscritos: 75,
+                categoria: "Finanzas",
+                inscrito: false
+            },
+            7: {
+                titulo: "Business Breakfast Club",
+                descripcion: "Desayunos ejecutivos mensuales para crear conexiones de alto valor. Ambiente exclusivo con empresarios destacados de diversos sectores.",
+                fecha: "28 Febrero, 2025",
+                hora: "7:30 AM - 10:00 AM",
+                lugar: "Club Empresarial - Salón Dorado",
+                organizador: "Elite Business Network",
+                capacidad: "40 participantes",
+                inscritos: 25,
+                categoria: "Networking",
+                inscrito: false
+            },
+            8: {
+                titulo: "Rueda de Negocios Textil",
+                descripcion: "Especializado en el sector textil y moda. Fabricantes, diseñadores y distribuidores en un solo lugar para crear alianzas comerciales.",
+                fecha: "12 Marzo, 2025",
+                hora: "10:00 AM - 6:00 PM",
+                lugar: "Centro de Moda - Hall Principal",
+                organizador: "Asociación Textil Nacional",
+                capacidad: "200 participantes",
+                inscritos: 156,
+                categoria: "Comercio",
+                inscrito: false
+            },
+            9: {
+                titulo: "AI & Business Conference",
+                descripcion: "Descubre cómo la inteligencia artificial está transformando los negocios. Casos de éxito, demostraciones en vivo y oportunidades de colaboración con empresas tech.",
+                fecha: "8 Abril, 2025",
+                hora: "9:00 AM - 7:00 PM",
+                lugar: "Innovation Center",
+                organizador: "AI Business Association",
+                capacidad: "400 participantes",
+                inscritos: 210,
+                categoria: "Tecnología",
+                inscrito: false
+            }
+        };
+
+        function verDetallesEvento(id) {
+            const evento = eventosData[id];
+            document.getElementById('modalTitulo').textContent = evento.titulo;
+            document.getElementById('modalContenido').innerHTML = `
+                <div class="info-grid" style="margin-bottom: 1rem;">
+                    <div class="info-card">
+                        <div class="info-card-icon">📅</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Fecha</span>
+                            <span class="info-value">${evento.fecha}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">🕐</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Horario</span>
+                            <span class="info-value">${evento.hora}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">📍</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Ubicación</span>
+                            <span class="info-value">${evento.lugar}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">👥</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Inscritos</span>
+                            <span class="info-value">${evento.inscritos}/${evento.capacidad.split(' ')[0]}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Descripción</h4>
+                    <p>${evento.descripcion}</p>
+                </div>
+                <div class="docs-grid">
+                    <div class="doc-item">
+                        <span class="doc-label">Organizador</span>
+                        <span class="doc-value">${evento.organizador}</span>
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Categoría</span>
+                        <span class="doc-value">${evento.categoria}</span>
+                    </div>
+                </div>
+            `;
+            
+            // Botones del modal según estado de inscripción
+            const accionesDiv = document.getElementById('modalAcciones');
+            if (evento.inscrito) {
+                accionesDiv.innerHTML = `
+                    <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+                    <span class="status-badge status-approved" style="padding: 12px 20px;">✓ Ya inscrito</span>
+                `;
+            } else {
+                accionesDiv.innerHTML = `
+                    <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+                    <button class="btn btn-primary" onclick="unirseEvento(${id}); cerrarModal();">✨ Unirse al evento</button>
+                `;
+            }
+            
+            document.getElementById('modalDetalles').style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalDetalles').style.display = 'none';
+        }
+
+        function unirseEvento(id) {
+            const evento = eventosData[id];
+            if (confirm(`¿Deseas inscribirte a "${evento.titulo}"?`)) {
+                evento.inscrito = true;
+                evento.inscritos++;
+                
+                // Mover la tarjeta a "Mis Eventos"
+                const card = document.querySelector(`[data-id="${id}"]`);
+                if (card) {
+                    card.remove();
+                }
+                
+                // Crear nueva tarjeta en Mis Eventos
+                const misEventosGrid = document.getElementById('misEventosGrid');
+                const nuevaTarjeta = document.createElement('div');
+                nuevaTarjeta.className = 'evento-card evento-inscrito';
+                nuevaTarjeta.innerHTML = `
+                    <div class="evento-card-header">
+                        <span class="evento-categoria">${getCategoriaEmoji(evento.categoria)} ${evento.categoria}</span>
+                        <span class="status-badge status-approved">Inscrito</span>
+                    </div>
+                    <h3 class="evento-titulo">${evento.titulo}</h3>
+                    <p class="evento-descripcion">${evento.descripcion.substring(0, 100)}...</p>
+                    <div class="evento-meta">
+                        <span>📅 ${evento.fecha}</span>
+                        <span>📍 ${evento.lugar.split(' - ')[0]}</span>
+                    </div>
+                    <div class="evento-actions">
+                        <button class="btn btn-secondary" onclick="verDetallesEvento(${id})">👁 Ver detalles</button>
+                        <button class="btn btn-danger" onclick="cancelarInscripcion(${id})">Cancelar inscripción</button>
+                    </div>
+                `;
+                misEventosGrid.appendChild(nuevaTarjeta);
+                
+                actualizarContadorMisEventos();
+                alert(`¡Te has inscrito exitosamente a "${evento.titulo}"!`);
+            }
+        }
+
+        function cancelarInscripcion(id) {
+            const evento = eventosData[id];
+            if (confirm(`¿Estás seguro de cancelar tu inscripción a "${evento.titulo}"?`)) {
+                evento.inscrito = false;
+                evento.inscritos--;
+                
+                // Recargar la página para simplificar (en producción sería más dinámico)
+                location.reload();
+            }
+        }
+
+        function getCategoriaEmoji(categoria) {
+            const emojis = {
+                'Networking': '🏢',
+                'Comercio': '💼',
+                'Tecnología': '🚀',
+                'Sostenibilidad': '🌱',
+                'Gastronomía': '🍽',
+                'Finanzas': '💰'
+            };
+            return emojis[categoria] || '📌';
+        }
+
+        function actualizarContadorMisEventos() {
+            const count = document.querySelectorAll('#misEventosGrid .evento-card').length;
+            document.getElementById('contadorMisEventos').textContent = `${count} evento${count !== 1 ? 's' : ''}`;
+        }
+
+        // Filtros
+        document.getElementById('busquedaEventos').addEventListener('input', filtrarEventos);
+        
+        document.querySelectorAll('.categoria-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                document.querySelectorAll('.categoria-tag').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                filtrarEventos();
+            });
+        });
+
+        function filtrarEventos() {
+            const busqueda = document.getElementById('busquedaEventos').value.toLowerCase();
+            const categoriaActiva = document.querySelector('.categoria-tag.active').dataset.categoria;
+            const cards = document.querySelectorAll('#eventosDisponiblesGrid .evento-card');
+            let visibles = 0;
+
+            cards.forEach(card => {
+                const titulo = card.querySelector('.evento-titulo').textContent.toLowerCase();
+                const descripcion = card.querySelector('.evento-descripcion').textContent.toLowerCase();
+                const cardCategoria = card.dataset.categoria;
+                
+                const cumpleBusqueda = titulo.includes(busqueda) || descripcion.includes(busqueda);
+                const cumpleCategoria = categoriaActiva === 'todos' || cardCategoria === categoriaActiva;
+
+                if (cumpleBusqueda && cumpleCategoria) {
+                    card.style.display = 'block';
+                    visibles++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('sinResultados').style.display = visibles === 0 ? 'block' : 'none';
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('busquedaEventos').value = '';
+            document.querySelectorAll('.categoria-tag').forEach(t => t.classList.remove('active'));
+            document.querySelector('.categoria-tag[data-categoria="todos"]').classList.add('active');
+            filtrarEventos();
+        }
+
+        // Click fuera del modal para cerrar
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalDetalles');
+            if (event.target === modal) {
+                cerrarModal();
+            }
+        }
+    </script>
+    <script src="../js/components/sidebar-user.js"></script>
+</body>
+
+</html>

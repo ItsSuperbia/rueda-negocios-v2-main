@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Crear evento</title>
+</head>
+<body>
+
+<h1>Crear Evento</h1>
+
+<form id="eventoForm">
+    <label>Título:</label>
+    <input type="text" name="title" required><br><br>
+
+    <label>Descripción:</label><br>
+    <textarea name="description" required></textarea><br><br>
+
+    <label>Fecha inicio:</label>
+    <input type="date" name="startDate" required><br><br>
+
+    <label>Fecha fin:</label>
+    <input type="date" name="endDate" required><br><br>
+
+    <label>Días de duración:</label>
+    <input type="number" name="durationDays" required><br><br>
+
+    <label>Ubicación:</label>
+    <input type="text" name="location" required><br><br>
+
+    <label>Modalidad:</label>
+    <select name="modalidad" required>
+        <option value="presencial">Presencial</option>
+        <option value="virtual">Virtual</option>
+        <option value="mixto">Mixto</option>
+    </select><br><br>
+
+    <label>Cupos:</label>
+    <input type="number" name="cupos" required><br><br>
+
+    <label>Valor inscripción:</label>
+    <input type="number" name="valorInscripcion" required><br><br>
+
+    <label>Enfoque:</label>
+    <input type="text" name="enfoque" required><br><br>
+
+    <button type="submit">Crear evento</button>
+</form>
+
+<p id="mensaje"></p>
+
+<script src="../../js/modules/crear-evento.js"></script>
+</body>
+</html>

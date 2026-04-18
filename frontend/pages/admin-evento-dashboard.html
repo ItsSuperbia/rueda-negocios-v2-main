@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin Evento - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="admin-evento-dashboard.html" class="logo">EventConnect Organizador</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Admin de Eventos</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <h2>🎪 Panel de Organizador</h2>
+                <p>Bienvenido al sistema de gestión de eventos. Crea y administra tus ruedas de negocios.</p>
+
+                <!-- Stats Cards -->
+                <div class="info-grid" style="margin-top: 2rem;">
+                    <div class="info-card" style="background: linear-gradient(135deg, var(--primary-light) 0%, var(--card-bg) 100%);">
+                        <div class="info-card-icon" style="background: var(--primary-color); color: white;">📊</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Eventos Activos</span>
+                            <span class="info-value" style="font-size: 1.5rem;">4</span>
+                        </div>
+                    </div>
+                    <div class="info-card" style="background: linear-gradient(135deg, var(--success-light) 0%, var(--card-bg) 100%);">
+                        <div class="info-card-icon" style="background: var(--success-color); color: white;">👥</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Total Inscritos</span>
+                            <span class="info-value" style="font-size: 1.5rem;">847</span>
+                        </div>
+                    </div>
+                    <div class="info-card" style="background: linear-gradient(135deg, var(--warning-light) 0%, var(--card-bg) 100%);">
+                        <div class="info-card-icon" style="background: var(--warning-color); color: white;">🤝</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Reuniones Generadas</span>
+                            <span class="info-value" style="font-size: 1.5rem;">312</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">📅</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Próximo Evento</span>
+                            <span class="info-value">15 Ene, 2025</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="grid" style="margin-top: 2rem;">
+                    <div style="background: rgba(99, 102, 241, 0.1); padding: 20px; border-radius: 12px; border: 1px solid var(--primary-color);">
+                        <h3 style="color: var(--primary-color);">➕ Crear Evento</h3>
+                        <p>Configura un nuevo evento o rueda de negocios.</p>
+                        <button onclick="window.location.href='crear-evento.html'" class="btn btn-primary btn-block">
+                            Crear Nuevo Evento
+                        </button>
+                    </div>
+
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px; border: 1px solid var(--success-color);">
+                        <h3 style="color: var(--success-color);">📋 Mis Eventos</h3>
+                        <p>Gestiona y monitorea tus eventos creados.</p>
+                        <button onclick="window.location.href='mis-eventos-admin.html'" class="btn btn-success btn-block">
+                            Ver Mis Eventos
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eventos Recientes -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3>📅 Eventos Recientes</h3>
+                <div class="eventos-grid" style="margin-top: 1rem;">
+                    <div class="evento-card">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🏢 Networking</span>
+                            <span class="status-badge status-approved">Activo</span>
+                        </div>
+                        <h3 class="evento-titulo">Feria de Proveedores 2025</h3>
+                        <div class="evento-meta">
+                            <span>📅 15 Ene, 2025</span>
+                            <span>👥 342/500</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="window.location.href='mis-eventos-admin.html'">Gestionar</button>
+                        </div>
+                    </div>
+
+                    <div class="evento-card">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🚀 Tecnología</span>
+                            <span class="status-badge status-approved">Activo</span>
+                        </div>
+                        <h3 class="evento-titulo">Tech Business Summit</h3>
+                        <div class="evento-meta">
+                            <span>📅 10 Mar, 2025</span>
+                            <span>👥 287/400</span>
+                        </div>
+                        <div class="evento-actions">
+                            <button class="btn btn-secondary" onclick="window.location.href='mis-eventos-admin.html'">Gestionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("userRole");
+
+        if (!token || role !== "adminEvento") {
+            window.location.href = "login.html";
+        }
+    </script>
+    <script src="../js/components/sidebar-admin-evento.js"></script>
+</body>
+
+</html>

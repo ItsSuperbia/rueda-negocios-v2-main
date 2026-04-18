@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Agenda - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="profile.html" class="logo">EventConnect</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Mi Cuenta</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin-bottom: 0;">📅 Agenda de Reuniones</h2>
+                    <span class="role-badge">5 reuniones</span>
+                </div>
+                <p>Gestiona tus citas programadas con otras empresas.</p>
+
+                <!-- Filtros -->
+                <div style="display: flex; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap;">
+                    <select class="form-control" style="max-width: 180px;" id="filtroEstado">
+                        <option value="todos">Todos los estados</option>
+                        <option value="confirmada">Confirmadas</option>
+                        <option value="pendiente">Pendientes</option>
+                        <option value="completada">Completadas</option>
+                        <option value="cancelada">Canceladas</option>
+                    </select>
+                    <input type="date" class="form-control" style="max-width: 180px;" id="filtroFecha">
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table id="agenda-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Empresa</th>
+                                <th>Evento</th>
+                                <th>Lugar/Mesa</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agendaBody">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Próximas reuniones destacadas -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3>⏰ Próximas Reuniones</h3>
+                <p>Tus reuniones más cercanas</p>
+                
+                <div class="eventos-grid" style="margin-top: 1rem;">
+                    <div class="evento-card evento-inscrito">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🤝 Reunión B2B</span>
+                            <span class="status-badge status-approved">Confirmada</span>
+                        </div>
+                        <h3 class="evento-titulo">Agroindustrias del Valle S.A.</h3>
+                        <p class="evento-descripcion">Negociación de suministro de materias primas para el primer trimestre 2025.</p>
+                        <div class="evento-meta">
+                            <span>📅 10 Dic, 2024 - 10:00 AM</span>
+                            <span>📍 Mesa Virtual 3</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>🎯 Feria de Proveedores 2025</span>
+                        </div>
+                    </div>
+
+                    <div class="evento-card evento-inscrito">
+                        <div class="evento-card-header">
+                            <span class="evento-categoria">🤝 Reunión B2B</span>
+                            <span class="status-badge status-pending">Pendiente</span>
+                        </div>
+                        <h3 class="evento-titulo">TechSolutions Corp.</h3>
+                        <p class="evento-descripcion">Presentación de servicios de transformación digital y automatización.</p>
+                        <div class="evento-meta">
+                            <span>📅 12 Dic, 2024 - 2:30 PM</span>
+                            <span>📍 Sala Innovación</span>
+                        </div>
+                        <div class="evento-info-extra">
+                            <span>🎯 Tech Business Summit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/services/meetingService.js"></script>
+    <script>
+        // Datos de reuniones inventadas
+        const reunionesInventadas = [
+            {
+                fecha: "2024-12-10",
+                horaInicio: "10:00",
+                horaFin: "10:30",
+                empresa: "Agroindustrias del Valle S.A.",
+                evento: "Feria de Proveedores 2025",
+                lugar: "Mesa Virtual 3",
+                estado: "confirmada"
+            },
+            {
+                fecha: "2024-12-12",
+                horaInicio: "14:30",
+                horaFin: "15:00",
+                empresa: "TechSolutions Corp.",
+                evento: "Tech Business Summit",
+                lugar: "Sala Innovación",
+                estado: "pendiente"
+            },
+            {
+                fecha: "2024-12-15",
+                horaInicio: "09:00",
+                horaFin: "09:45",
+                empresa: "Distribuidora Nacional Ltda.",
+                evento: "Expo Importadores Latam",
+                lugar: "Mesa 7 - Hall Principal",
+                estado: "confirmada"
+            },
+            {
+                fecha: "2024-12-18",
+                horaInicio: "11:00",
+                horaFin: "11:30",
+                empresa: "EcoPackaging S.A.S.",
+                evento: "Green Commerce Forum",
+                lugar: "Stand Sostenible #12",
+                estado: "pendiente"
+            },
+            {
+                fecha: "2024-11-28",
+                horaInicio: "16:00",
+                horaFin: "16:30",
+                empresa: "Inversiones Capital Plus",
+                evento: "Inversores & Startups Connect",
+                lugar: "Sala VIP Torre Financiera",
+                estado: "completada"
+            },
+            {
+                fecha: "2024-11-20",
+                horaInicio: "10:00",
+                horaFin: "10:30",
+                empresa: "Logística Express",
+                evento: "Business Breakfast Club",
+                lugar: "Club Empresarial",
+                estado: "completada"
+            },
+            {
+                fecha: "2024-12-05",
+                horaInicio: "15:00",
+                horaFin: "15:30",
+                empresa: "Textiles Modernos",
+                evento: "Rueda de Negocios Textil",
+                lugar: "Mesa 15",
+                estado: "cancelada"
+            }
+        ];
+
+        function getEstadoBadge(estado) {
+            const badges = {
+                'confirmada': '<span class="status-badge status-approved">Confirmada</span>',
+                'pendiente': '<span class="status-badge status-pending">Pendiente</span>',
+                'completada': '<span style="background: var(--primary-light); color: var(--primary-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Completada</span>',
+                'cancelada': '<span class="status-badge status-rejected">Cancelada</span>'
+            };
+            return badges[estado] || estado;
+        }
+
+        function cargarAgenda() {
+            const tbody = document.getElementById("agendaBody");
+            tbody.innerHTML = "";
+
+            reunionesInventadas.forEach((reunion, index) => {
+                const fechaObj = new Date(reunion.fecha + 'T' + reunion.horaInicio);
+                const fechaFormateada = fechaObj.toLocaleDateString('es-ES', { 
+                    weekday: 'short', 
+                    day: 'numeric', 
+                    month: 'short' 
+                });
+
+                const tr = document.createElement("tr");
+                tr.dataset.estado = reunion.estado;
+                tr.dataset.fecha = reunion.fecha;
+                tr.innerHTML = `
+                    <td><strong>${fechaFormateada}</strong></td>
+                    <td>${reunion.horaInicio} - ${reunion.horaFin}</td>
+                    <td>${reunion.empresa}</td>
+                    <td><small style="color: var(--text-secondary);">${reunion.evento}</small></td>
+                    <td>${reunion.lugar}</td>
+                    <td>${getEstadoBadge(reunion.estado)}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="verDetalleReunion(${index})">
+                            👁 Ver
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function verDetalleReunion(index) {
+            const reunion = reunionesInventadas[index];
+            alert(`Reunión con ${reunion.empresa}\n\nEvento: ${reunion.evento}\nFecha: ${reunion.fecha}\nHora: ${reunion.horaInicio} - ${reunion.horaFin}\nLugar: ${reunion.lugar}\nEstado: ${reunion.estado}`);
+        }
+
+        // Filtros
+        document.getElementById('filtroEstado').addEventListener('change', filtrarReuniones);
+        document.getElementById('filtroFecha').addEventListener('change', filtrarReuniones);
+
+        function filtrarReuniones() {
+            const estado = document.getElementById('filtroEstado').value;
+            const fecha = document.getElementById('filtroFecha').value;
+            const filas = document.querySelectorAll('#agendaBody tr');
+
+            filas.forEach(fila => {
+                const cumpleEstado = estado === 'todos' || fila.dataset.estado === estado;
+                const cumpleFecha = !fecha || fila.dataset.fecha === fecha;
+
+                fila.style.display = cumpleEstado && cumpleFecha ? '' : 'none';
+            });
+        }
+
+        cargarAgenda();
+    </script>
+    <script src="../js/components/sidebar-user.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="../index.html" class="logo">EventConnect</a>
+        </div>
+    </nav>
+
+    <div class="container auth-container">
+        <div class="card">
+            <h2 class="text-center" style="margin-bottom: 2rem;">Bienvenido de nuevo</h2>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" id="email" class="form-control" placeholder="ejemplo@empresa.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+            </form>
+
+            <p class="text-center mt-20">
+                ¿No tienes cuenta? <a href="register.html">Regístrate aquí</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="../js/services/authService.js"></script>
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                // Asumiendo que authService tiene una función login
+                // Si no, usar fetch directo como fallback
+                const response = await fetch("http://localhost:4000/api/users/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("userRole", data.user.role);
+
+                    // Redirigir según el rol del usuario
+                    switch (data.user.role) {
+                        case "adminSistema":
+                            window.location.href = "admin-dashboard.html";
+                            break;
+                        case "adminEvento":
+                            window.location.href = "admin-evento-dashboard.html";
+                            break;
+                        default:
+                            window.location.href = "profile.html";
+                    }
+                } else {
+                    alert(data.message || "Error al iniciar sesión");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión");
+            }
+        });
+    </script>
+</body>
+
+</html>

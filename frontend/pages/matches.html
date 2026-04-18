@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Matches - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="profile.html" class="logo">EventConnect</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Mi Cuenta</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <h2>Oportunidades de Negocio</h2>
+                <p>Aquí encontrarás empresas compatibles con tu perfil.</p>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+                <div id="matches-container" class="grid" style="grid-template-columns: 1fr;">
+                    <p class="text-center">Cargando matches...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para Agendar -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">Agendar Reunión</h3>
+            <input type="hidden" id="matchIdInput">
+
+            <div class="form-group">
+                <label class="form-label">Fecha y Hora Inicio</label>
+                <input type="datetime-local" id="startTime" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Fecha y Hora Fin</label>
+                <input type="datetime-local" id="endTime" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Lugar / Mesa</label>
+                <input type="text" id="location" value="Mesa Virtual 1" class="form-control">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="cerrarModal()" class="btn btn-secondary">Cancelar</button>
+                <button onclick="confirmarCita()" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/services/matchService.js"></script>
+    <script src="../js/services/meetingService.js"></script>
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        async function cargarMatches() {
+            const container = document.getElementById("matches-container");
+            const matches = await matchService.getMyMatches();
+
+            if (matches.length === 0) {
+                container.innerHTML = "<p class='text-center'>No tienes matches aún.</p>";
+                return;
+            }
+
+            container.innerHTML = "";
+            matches.forEach(match => {
+                const div = document.createElement("div");
+                div.className = "card";
+                div.style.padding = "1.5rem";
+                div.style.borderLeft = match.status === 'accepted' ? "4px solid var(--success-color)" : "4px solid var(--primary-color)";
+
+                const info = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h3 style="margin-bottom: 0.5rem;">${match.supplierId.nombreEmpresa} ↔ ${match.buyerId.nombreEmpresa}</h3>
+                            <p style="margin-bottom: 0.5rem;"><strong>Sector:</strong> ${match.supplierId.sector}</p>
+                            <span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">${match.status.toUpperCase()}</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            ${getButtons(match)}
+                        </div>
+                    </div>
+                `;
+
+                div.innerHTML = info;
+                container.appendChild(div);
+            });
+        }
+
+        function getButtons(match) {
+            if (match.status === "pending") {
+                return `
+                    <button class="btn btn-success" style="padding: 8px 16px;" onclick="responderMatch('${match._id}', 'accepted')">✅ Aceptar</button>
+                    <button class="btn btn-danger" style="padding: 8px 16px;" onclick="responderMatch('${match._id}', 'rejected')">❌ Rechazar</button>
+                `;
+            } else if (match.status === "accepted") {
+                return `
+                    <button class="btn btn-primary" onclick="abrirModal('${match._id}')">📅 Agendar Cita</button>
+                `;
+            }
+            return "";
+        }
+
+        async function responderMatch(id, status) {
+            if (!confirm(`¿Estás seguro de ${status === 'accepted' ? 'aceptar' : 'rechazar'} este match?`)) return;
+            await matchService.updateMatchStatus(id, status);
+            cargarMatches();
+        }
+
+        function abrirModal(matchId) {
+            document.getElementById("matchIdInput").value = matchId;
+            document.getElementById("modal").style.display = "block";
+        }
+
+        function cerrarModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        async function confirmarCita() {
+            const matchId = document.getElementById("matchIdInput").value;
+            const startTime = document.getElementById("startTime").value;
+            const endTime = document.getElementById("endTime").value;
+            const location = document.getElementById("location").value;
+
+            if (!startTime || !endTime) return alert("Fechas obligatorias");
+
+            try {
+                await meetingService.scheduleMeeting({ matchId, startTime, endTime, location });
+                alert("¡Reunión agendada!");
+                cerrarModal();
+                window.location.href = "agenda.html";
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        cargarMatches();
+    </script>
+    <script src="../js/components/sidebar-user.js"></script>
+</body>
+
+</html>

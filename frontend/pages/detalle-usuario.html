@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Usuario - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="admin-dashboard.html" class="logo">EventConnect Admin</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Administrador</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                    <h2 style="margin-bottom: 0;">👤 Detalle del Usuario</h2>
+                    <button onclick="volver()" class="btn btn-secondary" style="padding: 8px 16px;">
+                        ⬅ Volver
+                    </button>
+                </div>
+
+                <div id="contenido">
+                    <div style="display: flex; align-items: center; justify-content: center; padding: 3rem;">
+                        <p style="color: var(--text-secondary);">⏳ Cargando información del usuario...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("userRole");
+
+        if (!token || role !== "adminSistema") {
+            window.location.href = "login.html";
+        }
+
+        function volver() {
+            window.location.href = "gestion-usuarios.html";
+        }
+
+        document.addEventListener("DOMContentLoaded", cargarUsuario);
+
+        async function cargarUsuario() {
+            const params = new URLSearchParams(window.location.search);
+            const userId = params.get("id");
+            const contenedor = document.getElementById("contenido");
+
+            try {
+                const res = await fetch(`http://127.0.0.1:4000/api/users/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                const user = await res.json();
+
+                if (!res.ok) {
+                    contenedor.innerHTML = `<p style="color: var(--danger-color);">Error: ${user.message}</p>`;
+                    return;
+                }
+
+                renderizarUsuario(user);
+
+            } catch (error) {
+                contenedor.innerHTML = `<p style="color: var(--danger-color);">Error de conexión con el servidor</p>`;
+            }
+        }
+
+        function renderizarUsuario(user) {
+            const c = document.getElementById("contenido");
+            
+            const estadoClass = {
+                'pendiente': 'status-pending',
+                'aprobado': 'status-approved',
+                'rechazado': 'status-rejected'
+            }[user.estadoRegistro] || 'status-pending';
+
+            const formatRole = (role) => {
+                const roles = {
+                    'ofertante': '🏷️ Ofertante',
+                    'demandante': '🛒 Demandante',
+                    'adminEvento': '📋 Admin Evento',
+                    'adminSistema': '⚙️ Admin Sistema'
+                };
+                return roles[role] || role;
+            };
+
+            const fileLink = (file, label) => {
+                if (!file) return `<span class="file-missing">No adjuntado</span>`;
+                const url = `http://127.0.0.1:4000/${file.replace(/\\/g, "/")}`;
+                return `<a href="${url}" target="_blank" class="file-link">📄 Ver ${label || 'archivo'}</a>`;
+            };
+
+            c.innerHTML = `
+                <!-- Header del usuario -->
+                <div class="user-header">
+                    <div class="user-header-info">
+                        <h2 style="margin-bottom: 0.5rem;">${user.nombreEmpresa || "Sin nombre de empresa"}</h2>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <span class="status-badge ${estadoClass}">${user.estadoRegistro}</span>
+                            <span class="role-badge">${formatRole(user.role)}</span>
+                        </div>
+                        <p style="margin: 0.5rem 0 0; font-size: 0.9rem;">${user.email}</p>
+                    </div>
+                    ${user.logoEmpresa 
+                        ? `<img src="http://127.0.0.1:4000/${user.logoEmpresa}" alt="Logo" class="company-logo">` 
+                        : '<div class="company-logo-placeholder">🏢</div>'}
+                </div>
+
+                <!-- Información básica -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-card-icon">🏭</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Sector</span>
+                            <span class="info-value">${user.sector || "No especificado"}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">📋</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Empresa Formalizada</span>
+                            <span class="info-value">${user.formalizada ? "✅ Sí" : "⏳ No"}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">🔢</div>
+                        <div class="info-card-content">
+                            <span class="info-label">${user.formalizada ? 'NIT' : 'RUT Provisional'}</span>
+                            <span class="info-value">${user.formalizada ? (user.nit || "No registrado") : (user.rutProvisional || "No registrado")}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentos legales -->
+                <div class="section-title">
+                    <h3>📁 Documentos Legales</h3>
+                </div>
+                
+                <div class="docs-grid">
+                    ${user.formalizada ? `
+                        <div class="doc-item">
+                            <span class="doc-label">RUT</span>
+                            ${fileLink(user.rutFile, 'RUT')}
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Certificado de Existencia</span>
+                            ${fileLink(user.certificadoExistenciaFile, 'Certificado')}
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Cédula del Representante</span>
+                            ${fileLink(user.cedulaRepresentanteFile, 'Cédula')}
+                        </div>
+                    ` : `
+                        <div class="doc-item">
+                            <span class="doc-label">RUT Provisional</span>
+                            ${fileLink(user.rutProvisionalFile, 'RUT Provisional')}
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Comprobante de Matrícula</span>
+                            ${fileLink(user.comprobanteMatricula, 'Comprobante')}
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Cédula del Solicitante</span>
+                            ${fileLink(user.cedulaSolicitanteFile, 'Cédula')}
+                        </div>
+                    `}
+                </div>
+
+                <!-- Catálogos comerciales -->
+                <div class="section-title">
+                    <h3>📚 Catálogos Comerciales</h3>
+                </div>
+                
+                <div class="docs-grid">
+                    <div class="doc-item">
+                        <span class="doc-label">Catálogo de Productos/Servicios</span>
+                        ${fileLink(user.catalogoPDF, 'Catálogo')}
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Necesidades de la Empresa</span>
+                        ${fileLink(user.necesidadesPDF, 'Necesidades')}
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="cambiarEstado('${user._id}', 'aprobado')">
+                        ✓ Aprobar Usuario
+                    </button>
+                    <button class="btn btn-danger" onclick="cambiarEstado('${user._id}', 'rechazado')">
+                        ✕ Rechazar Usuario
+                    </button>
+                </div>
+            `;
+        }
+
+        async function cambiarEstado(id, estado) {
+            if (!confirm(`¿Estás seguro de ${estado === 'aprobado' ? 'aprobar' : 'rechazar'} este usuario?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://127.0.0.1:4000/api/users/${id}/estado`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ estado })
+                });
+
+                const data = await res.json();
+                alert(data.message);
+                window.location.href = "gestion-usuarios.html";
+            } catch (error) {
+                alert("Error al cambiar el estado del usuario");
+            }
+        }
+    </script>
+    <script src="../js/components/sidebar-admin.js"></script>
+</body>
+
+</html>

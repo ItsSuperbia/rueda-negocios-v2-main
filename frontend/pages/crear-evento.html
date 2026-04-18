@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Evento - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .form-section {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .form-section h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .form-group-inline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .form-group-inline input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .preview-card {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--card-bg) 100%);
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="admin-evento-dashboard.html" class="logo">EventConnect Organizador</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Admin de Eventos</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin-bottom: 0;">➕ Crear Nuevo Evento</h2>
+                    <button onclick="window.location.href='admin-evento-dashboard.html'" class="btn btn-secondary" style="padding: 8px 16px;">
+                        ⬅ Volver
+                    </button>
+                </div>
+                <p>Completa la información para crear un nuevo evento o rueda de negocios.</p>
+
+                <form id="formEvento" onsubmit="crearEvento(event)">
+                    
+                    <!-- Información Básica -->
+                    <div class="form-section">
+                        <h4>📝 Información Básica</h4>
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Evento *</label>
+                            <input type="text" class="form-control" id="nombreEvento" required 
+                                   placeholder="Ej: Rueda de Negocios Agroindustrial 2025">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Descripción *</label>
+                            <textarea class="form-control" id="descripcion" rows="4" required
+                                      placeholder="Describe el objetivo y beneficios del evento..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Categoría / Sector *</label>
+                                <select class="form-control" id="categoria" required>
+                                    <option value="">Seleccionar categoría</option>
+                                    <option value="agricultura">🌾 Agricultura y Agroindustria</option>
+                                    <option value="tecnologia">🚀 Tecnología e Innovación</option>
+                                    <option value="comercio">💼 Comercio e Importación</option>
+                                    <option value="manufactura">🏭 Manufactura e Industria</option>
+                                    <option value="servicios">🛎️ Servicios Profesionales</option>
+                                    <option value="gastronomia">🍽️ Gastronomía y Alimentos</option>
+                                    <option value="textil">👔 Textil y Moda</option>
+                                    <option value="construccion">🏗️ Construcción e Inmobiliario</option>
+                                    <option value="salud">🏥 Salud y Bienestar</option>
+                                    <option value="sostenibilidad">🌱 Sostenibilidad y Medio Ambiente</option>
+                                    <option value="finanzas">💰 Finanzas e Inversiones</option>
+                                    <option value="multisectorial">🌐 Multisectorial</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Modalidad *</label>
+                                <select class="form-control" id="modalidad" required>
+                                    <option value="">Seleccionar modalidad</option>
+                                    <option value="presencial">📍 Presencial</option>
+                                    <option value="virtual">💻 Virtual</option>
+                                    <option value="hibrido">🔄 Híbrido</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fecha y Horario -->
+                    <div class="form-section">
+                        <h4>📅 Fecha y Horario</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Inicio *</label>
+                                <input type="date" class="form-control" id="fechaInicio" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Finalización *</label>
+                                <input type="date" class="form-control" id="fechaFin" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Hora de Inicio *</label>
+                                <input type="time" class="form-control" id="horaInicio" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hora de Finalización *</label>
+                                <input type="time" class="form-control" id="horaFin" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Duración por Reunión (min)</label>
+                                <select class="form-control" id="duracionReunion">
+                                    <option value="15">15 minutos</option>
+                                    <option value="20">20 minutos</option>
+                                    <option value="30" selected>30 minutos</option>
+                                    <option value="45">45 minutos</option>
+                                    <option value="60">60 minutos</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fecha Límite de Inscripción *</label>
+                            <input type="date" class="form-control" id="fechaLimite" required style="max-width: 250px;">
+                        </div>
+                    </div>
+
+                    <!-- Ubicación -->
+                    <div class="form-section">
+                        <h4>📍 Ubicación</h4>
+                        <div class="form-group">
+                            <label class="form-label">Lugar / Dirección *</label>
+                            <input type="text" class="form-control" id="lugar" required
+                                   placeholder="Ej: Centro de Convenciones de la Ciudad, Calle 50 #10-20">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Ciudad *</label>
+                                <input type="text" class="form-control" id="ciudad" required placeholder="Ej: Bogotá">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">País</label>
+                                <input type="text" class="form-control" id="pais" value="Colombia">
+                            </div>
+                        </div>
+                        <div class="form-group" id="linkVirtualGroup" style="display: none;">
+                            <label class="form-label">Link de Acceso Virtual</label>
+                            <input type="url" class="form-control" id="linkVirtual" 
+                                   placeholder="https://meet.google.com/xxx-xxxx-xxx">
+                        </div>
+                    </div>
+
+                    <!-- Capacidad y Costos -->
+                    <div class="form-section">
+                        <h4>👥 Capacidad y Costos</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Cupos Disponibles *</label>
+                                <input type="number" class="form-control" id="cupos" required min="10" max="10000"
+                                       placeholder="Ej: 200">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Número de Mesas/Salas</label>
+                                <input type="number" class="form-control" id="mesas" min="1" max="100"
+                                       placeholder="Ej: 20">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-group-inline">
+                                <input type="checkbox" id="esGratis" checked onchange="toggleCosto()">
+                                <label for="esGratis" style="margin: 0; cursor: pointer;">Evento Gratuito</label>
+                            </div>
+                        </div>
+                        
+                        <div id="costoGroup" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Valor de Inscripción (COP) *</label>
+                                    <input type="number" class="form-control" id="valorInscripcion" min="0"
+                                           placeholder="Ej: 150000">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Descuento Early Bird (%)</label>
+                                    <input type="number" class="form-control" id="descuento" min="0" max="100"
+                                           placeholder="Ej: 20">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de Contacto -->
+                    <div class="form-section">
+                        <h4>📞 Información de Contacto</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Email de Contacto *</label>
+                                <input type="email" class="form-control" id="emailContacto" required
+                                       placeholder="eventos@empresa.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Teléfono de Contacto</label>
+                                <input type="tel" class="form-control" id="telefonoContacto"
+                                       placeholder="+57 300 123 4567">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Organizador / Empresa</label>
+                            <input type="text" class="form-control" id="organizador"
+                                   placeholder="Nombre de la empresa organizadora">
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="preview-card">
+                        <h4 style="margin-bottom: 1rem;">👁️ Vista Previa</h4>
+                        <div id="previewContent">
+                            <p style="color: var(--text-secondary); text-align: center;">
+                                Completa el formulario para ver la vista previa del evento.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="action-buttons" style="margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="guardarBorrador()">
+                            💾 Guardar Borrador
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            ✅ Crear Evento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("userRole");
+
+        if (!token || role !== "adminEvento") {
+            window.location.href = "login.html";
+        }
+
+        // Toggle costo
+        function toggleCosto() {
+            const esGratis = document.getElementById('esGratis').checked;
+            document.getElementById('costoGroup').style.display = esGratis ? 'none' : 'block';
+        }
+
+        // Toggle link virtual según modalidad
+        document.getElementById('modalidad').addEventListener('change', function() {
+            const modalidad = this.value;
+            const linkGroup = document.getElementById('linkVirtualGroup');
+            linkGroup.style.display = (modalidad === 'virtual' || modalidad === 'hibrido') ? 'block' : 'none';
+        });
+
+        // Actualizar preview
+        const formInputs = document.querySelectorAll('#formEvento input, #formEvento select, #formEvento textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('input', actualizarPreview);
+        });
+
+        function actualizarPreview() {
+            const nombre = document.getElementById('nombreEvento').value || 'Nombre del Evento';
+            const categoria = document.getElementById('categoria').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const lugar = document.getElementById('lugar').value || 'Ubicación por definir';
+            const cupos = document.getElementById('cupos').value || '---';
+            const esGratis = document.getElementById('esGratis').checked;
+            const valor = document.getElementById('valorInscripcion').value;
+
+            const categoriaTexto = {
+                'agricultura': '🌾 Agricultura',
+                'tecnologia': '🚀 Tecnología',
+                'comercio': '💼 Comercio',
+                'manufactura': '🏭 Manufactura',
+                'servicios': '🛎️ Servicios',
+                'gastronomia': '🍽️ Gastronomía',
+                'textil': '👔 Textil',
+                'construccion': '🏗️ Construcción',
+                'salud': '🏥 Salud',
+                'sostenibilidad': '🌱 Sostenibilidad',
+                'finanzas': '💰 Finanzas',
+                'multisectorial': '🌐 Multisectorial'
+            }[categoria] || '📌 Sin categoría';
+
+            const fechaFormateada = fechaInicio ? new Date(fechaInicio + 'T00:00:00').toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }) : 'Fecha por definir';
+
+            document.getElementById('previewContent').innerHTML = `
+                <div class="evento-card" style="margin: 0;">
+                    <div class="evento-card-header">
+                        <span class="evento-categoria">${categoriaTexto}</span>
+                        <span class="status-badge status-pending">Borrador</span>
+                    </div>
+                    <h3 class="evento-titulo">${nombre}</h3>
+                    <div class="evento-meta">
+                        <span>📅 ${fechaFormateada}</span>
+                        <span>📍 ${lugar}</span>
+                    </div>
+                    <div class="evento-info-extra">
+                        <span>👥 0/${cupos} inscritos</span>
+                        <span>💰 ${esGratis ? 'Gratis' : (valor ? '$' + Number(valor).toLocaleString() : 'Precio por definir')}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function guardarBorrador() {
+            alert('Borrador guardado exitosamente. Puedes continuar editándolo después.');
+        }
+
+        function crearEvento(e) {
+            e.preventDefault();
+            
+            // Validaciones básicas
+            const fechaInicio = new Date(document.getElementById('fechaInicio').value);
+            const fechaFin = new Date(document.getElementById('fechaFin').value);
+            const fechaLimite = new Date(document.getElementById('fechaLimite').value);
+
+            if (fechaFin < fechaInicio) {
+                alert('La fecha de finalización debe ser igual o posterior a la fecha de inicio.');
+                return;
+            }
+
+            if (fechaLimite > fechaInicio) {
+                alert('La fecha límite de inscripción debe ser anterior a la fecha del evento.');
+                return;
+            }
+
+            // Simular creación
+            if (confirm('¿Estás seguro de crear este evento?')) {
+                alert('¡Evento creado exitosamente! Será revisado por el administrador del sistema.');
+                window.location.href = 'mis-eventos-admin.html';
+            }
+        }
+
+        // Inicializar preview
+        actualizarPreview();
+    </script>
+    <script src="../js/components/sidebar-admin-evento.js"></script>
+</body>
+
+</html>

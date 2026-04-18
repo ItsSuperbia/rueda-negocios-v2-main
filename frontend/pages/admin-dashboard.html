@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Rueda de Negocios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="admin-dashboard.html" class="logo">EventConnect Admin</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Administrador</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <h2>Panel de Control</h2>
+                <p>Bienvenido al sistema de gestión de la Rueda de Negocios.</p>
+
+                <div class="grid" style="margin-top: 2rem;">
+                    <!-- Stat Card 1 -->
+                    <div
+                        style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 12px; border: 1px solid var(--primary-color);">
+                        <h3 style="color: var(--primary-color);">Usuarios</h3>
+                        <p>Gestiona las empresas registradas.</p>
+                        <button onclick="window.location.href='gestion-usuarios.html'"
+                            class="btn btn-primary btn-block">Ver Usuarios</button>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div
+                        style="background: rgba(34, 197, 94, 0.1); padding: 20px; border-radius: 12px; border: 1px solid var(--success-color);">
+                        <h3 style="color: var(--success-color);">Matchmaking</h3>
+                        <p>Ejecuta el algoritmo de emparejamiento.</p>
+                        <button onclick="generarMatches()" class="btn btn-success btn-block">⚡ Generar Matches</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("userRole");
+
+        if (!token || role !== "adminSistema") {
+            window.location.href = "login.html";
+        }
+
+        async function generarMatches() {
+            if (!confirm("¿Deseas ejecutar el algoritmo de emparejamiento?")) return;
+
+            try {
+                const response = await fetch("http://localhost:4000/api/matches/generate", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await response.json();
+                alert(data.message);
+            } catch (e) {
+                alert("Error generando matches");
+                console.error(e);
+            }
+        }
+    </script>
+    <script src="../js/components/sidebar-admin.js"></script>
+</body>
+
+</html>

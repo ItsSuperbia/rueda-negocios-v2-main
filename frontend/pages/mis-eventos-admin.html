@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Eventos - Admin Evento</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="admin-evento-dashboard.html" class="logo">EventConnect Organizador</a>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary);">Admin de Eventos</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-grid">
+        <main>
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="margin-bottom: 0;">📋 Mis Eventos</h2>
+                    <button onclick="window.location.href='crear-evento.html'" class="btn btn-primary" style="padding: 10px 20px;">
+                        ➕ Crear Evento
+                    </button>
+                </div>
+                <p>Gestiona todos los eventos que has creado.</p>
+
+                <!-- Filtros -->
+                <div class="eventos-filtros">
+                    <div class="busqueda-container">
+                        <input type="text" class="form-control" id="busquedaEvento" 
+                               placeholder="🔍 Buscar eventos por nombre...">
+                    </div>
+                    <div class="categorias-container">
+                        <span class="filtro-label">Filtrar por estado:</span>
+                        <div class="categorias-tags">
+                            <button class="categoria-tag active" data-estado="todos">Todos</button>
+                            <button class="categoria-tag" data-estado="activo">🟢 Activos</button>
+                            <button class="categoria-tag" data-estado="pendiente">🟡 Pendientes</button>
+                            <button class="categoria-tag" data-estado="finalizado">🔵 Finalizados</button>
+                            <button class="categoria-tag" data-estado="cancelado">🔴 Cancelados</button>
+                            <button class="categoria-tag" data-estado="borrador">⚪ Borradores</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de eventos -->
+                <div class="eventos-grid" id="eventosGrid">
+                    <!-- Los eventos se cargan dinámicamente -->
+                </div>
+
+                <!-- Sin resultados -->
+                <div id="sinResultados" style="display: none; text-align: center; padding: 3rem;">
+                    <p style="font-size: 3rem; margin-bottom: 1rem;">📭</p>
+                    <p style="font-size: 1.2rem; color: var(--text-secondary);">No se encontraron eventos.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Detalles del Evento -->
+    <div class="modal" id="modalEvento">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div id="modalEventoContent"></div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("userRole");
+
+        if (!token || role !== "adminEvento") {
+            window.location.href = "login.html";
+        }
+
+        // Datos de eventos inventados
+        const eventosData = [
+            {
+                id: 1,
+                nombre: "Feria de Proveedores 2025",
+                descripcion: "Conecta con más de 50 proveedores nacionales e internacionales. Oportunidad única para establecer alianzas estratégicas y conocer las últimas tendencias del mercado.",
+                categoria: "networking",
+                categoriaTexto: "🏢 Networking",
+                modalidad: "Presencial",
+                fechaInicio: "2025-01-15",
+                fechaFin: "2025-01-16",
+                horaInicio: "09:00",
+                horaFin: "18:00",
+                duracionReunion: 30,
+                fechaLimite: "2025-01-10",
+                lugar: "Centro de Convenciones de la Ciudad",
+                ciudad: "Bogotá",
+                cupos: 500,
+                inscritos: 342,
+                mesas: 25,
+                esGratis: false,
+                valorInscripcion: 150000,
+                emailContacto: "ferias@camaracomercio.com",
+                telefono: "+57 300 123 4567",
+                organizador: "Cámara de Comercio",
+                estado: "activo",
+                reunionesGeneradas: 156,
+                empresasInscritas: [
+                    { nombre: "Agroindustrias del Valle S.A.", sector: "Agricultura", fecha: "2024-12-01" },
+                    { nombre: "TechSolutions Corp.", sector: "Tecnología", fecha: "2024-12-02" },
+                    { nombre: "Distribuidora Nacional Ltda.", sector: "Comercio", fecha: "2024-12-03" },
+                    { nombre: "EcoPackaging S.A.S.", sector: "Manufactura", fecha: "2024-12-04" },
+                    { nombre: "Inversiones Capital Plus", sector: "Finanzas", fecha: "2024-12-05" },
+                    { nombre: "Logística Express", sector: "Servicios", fecha: "2024-12-06" },
+                    { nombre: "Textiles Modernos", sector: "Textil", fecha: "2024-12-07" },
+                    { nombre: "FoodTech Colombia", sector: "Gastronomía", fecha: "2024-12-08" }
+                ]
+            },
+            {
+                id: 2,
+                nombre: "Tech Business Summit",
+                descripcion: "Descubre las últimas innovaciones tecnológicas para tu negocio. Startups, inversores y empresas consolidadas en un mismo lugar para crear sinergias.",
+                categoria: "tecnologia",
+                categoriaTexto: "🚀 Tecnología",
+                modalidad: "Híbrido",
+                fechaInicio: "2025-03-10",
+                fechaFin: "2025-03-11",
+                horaInicio: "08:00",
+                horaFin: "17:00",
+                duracionReunion: 30,
+                fechaLimite: "2025-03-05",
+                lugar: "Campus Tech Hub",
+                ciudad: "Medellín",
+                cupos: 400,
+                inscritos: 287,
+                mesas: 20,
+                esGratis: false,
+                valorInscripcion: 200000,
+                emailContacto: "summit@techconnect.io",
+                telefono: "+57 301 987 6543",
+                organizador: "TechConnect Inc.",
+                estado: "activo",
+                reunionesGeneradas: 98,
+                empresasInscritas: [
+                    { nombre: "DataMind AI", sector: "Tecnología", fecha: "2024-11-15" },
+                    { nombre: "CloudServices Pro", sector: "Tecnología", fecha: "2024-11-18" },
+                    { nombre: "FinTech Solutions", sector: "Finanzas", fecha: "2024-11-20" },
+                    { nombre: "GreenTech Innovations", sector: "Sostenibilidad", fecha: "2024-11-22" },
+                    { nombre: "Startup Hub Latam", sector: "Servicios", fecha: "2024-11-25" }
+                ]
+            },
+            {
+                id: 3,
+                nombre: "Rueda de Negocios Agroindustrial",
+                descripcion: "Evento especializado para el sector agrícola y agroindustrial. Productores, procesadores y distribuidores conectados en un solo lugar.",
+                categoria: "agricultura",
+                categoriaTexto: "🌾 Agricultura",
+                modalidad: "Presencial",
+                fechaInicio: "2025-02-20",
+                fechaFin: "2025-02-21",
+                horaInicio: "08:00",
+                horaFin: "16:00",
+                duracionReunion: 45,
+                fechaLimite: "2025-02-15",
+                lugar: "Centro de Convenciones Agropecuario",
+                ciudad: "Cali",
+                cupos: 300,
+                inscritos: 45,
+                mesas: 15,
+                esGratis: true,
+                valorInscripcion: 0,
+                emailContacto: "agronegocios@campoconecta.com",
+                telefono: "+57 302 456 7890",
+                organizador: "Campo Conecta",
+                estado: "pendiente",
+                reunionesGeneradas: 0,
+                empresasInscritas: [
+                    { nombre: "Café Premium Colombia", sector: "Agricultura", fecha: "2024-12-10" },
+                    { nombre: "Frutas del Trópico", sector: "Agricultura", fecha: "2024-12-11" },
+                    { nombre: "Lácteos Andinos", sector: "Gastronomía", fecha: "2024-12-12" }
+                ]
+            },
+            {
+                id: 4,
+                nombre: "Green Commerce Forum 2024",
+                descripcion: "Foro dedicado a empresas con enfoque sostenible. Prácticas eco-amigables y proveedores certificados en comercio verde.",
+                categoria: "sostenibilidad",
+                categoriaTexto: "🌱 Sostenibilidad",
+                modalidad: "Virtual",
+                fechaInicio: "2024-11-15",
+                fechaFin: "2024-11-15",
+                horaInicio: "09:00",
+                horaFin: "14:00",
+                duracionReunion: 20,
+                fechaLimite: "2024-11-10",
+                lugar: "Plataforma Virtual",
+                ciudad: "Online",
+                cupos: 250,
+                inscritos: 250,
+                mesas: 10,
+                esGratis: true,
+                valorInscripcion: 0,
+                emailContacto: "foro@ecotrade.org",
+                telefono: "+57 303 111 2222",
+                organizador: "EcoTrade Foundation",
+                estado: "finalizado",
+                reunionesGeneradas: 87,
+                empresasInscritas: [
+                    { nombre: "EcoPackaging S.A.S.", sector: "Manufactura", fecha: "2024-10-20" },
+                    { nombre: "Solar Energy Plus", sector: "Energía", fecha: "2024-10-22" },
+                    { nombre: "Reciclaje Total", sector: "Sostenibilidad", fecha: "2024-10-25" },
+                    { nombre: "BioProducts Co.", sector: "Agricultura", fecha: "2024-10-28" }
+                ]
+            },
+            {
+                id: 5,
+                nombre: "Expo Textil Colombia 2024",
+                descripcion: "La exposición más importante del sector textil y moda en Colombia. Diseñadores, fabricantes y distribuidores reunidos.",
+                categoria: "textil",
+                categoriaTexto: "👔 Textil y Moda",
+                modalidad: "Presencial",
+                fechaInicio: "2024-10-05",
+                fechaFin: "2024-10-07",
+                horaInicio: "10:00",
+                horaFin: "20:00",
+                duracionReunion: 30,
+                fechaLimite: "2024-09-30",
+                lugar: "Centro de Moda y Diseño",
+                ciudad: "Bogotá",
+                cupos: 400,
+                inscritos: 385,
+                mesas: 30,
+                esGratis: false,
+                valorInscripcion: 180000,
+                emailContacto: "expo@textilcolombia.com",
+                telefono: "+57 304 333 4444",
+                organizador: "Asociación Textil Nacional",
+                estado: "finalizado",
+                reunionesGeneradas: 210,
+                empresasInscritas: [
+                    { nombre: "Textiles Modernos", sector: "Textil", fecha: "2024-09-10" },
+                    { nombre: "Confecciones Elite", sector: "Textil", fecha: "2024-09-12" },
+                    { nombre: "Moda Urbana S.A.", sector: "Textil", fecha: "2024-09-15" }
+                ]
+            },
+            {
+                id: 6,
+                nombre: "Rueda de Negocios Gastronómica",
+                descripcion: "Evento cancelado debido a fuerza mayor. Se reprogramará para el primer trimestre de 2025.",
+                categoria: "gastronomia",
+                categoriaTexto: "🍽️ Gastronomía",
+                modalidad: "Presencial",
+                fechaInicio: "2024-11-25",
+                fechaFin: "2024-11-26",
+                horaInicio: "11:00",
+                horaFin: "21:00",
+                duracionReunion: 30,
+                fechaLimite: "2024-11-20",
+                lugar: "Centro Gastronómico",
+                ciudad: "Cartagena",
+                cupos: 200,
+                inscritos: 78,
+                mesas: 12,
+                esGratis: false,
+                valorInscripcion: 100000,
+                emailContacto: "eventos@gourmetalliance.com",
+                telefono: "+57 305 555 6666",
+                organizador: "Gourmet Alliance",
+                estado: "cancelado",
+                reunionesGeneradas: 0,
+                empresasInscritas: []
+            },
+            {
+                id: 7,
+                nombre: "Encuentro Financiero 2025",
+                descripcion: "Borrador de evento para conectar empresas con fondos de inversión y opciones de financiamiento.",
+                categoria: "finanzas",
+                categoriaTexto: "💰 Finanzas",
+                modalidad: "Híbrido",
+                fechaInicio: "2025-04-15",
+                fechaFin: "2025-04-15",
+                horaInicio: "14:00",
+                horaFin: "20:00",
+                duracionReunion: 45,
+                fechaLimite: "2025-04-10",
+                lugar: "Torre Financiera - Por confirmar",
+                ciudad: "Bogotá",
+                cupos: 150,
+                inscritos: 0,
+                mesas: 8,
+                esGratis: false,
+                valorInscripcion: 250000,
+                emailContacto: "",
+                telefono: "",
+                organizador: "Por definir",
+                estado: "borrador",
+                reunionesGeneradas: 0,
+                empresasInscritas: []
+            }
+        ];
+
+        function getEstadoBadge(estado) {
+            const badges = {
+                'activo': '<span class="status-badge status-approved">🟢 Activo</span>',
+                'pendiente': '<span class="status-badge status-pending">🟡 Pendiente</span>',
+                'finalizado': '<span style="background: var(--primary-light); color: var(--primary-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">🔵 Finalizado</span>',
+                'cancelado': '<span class="status-badge status-rejected">🔴 Cancelado</span>',
+                'borrador': '<span style="background: var(--bg-secondary); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border-color);">⚪ Borrador</span>'
+            };
+            return badges[estado] || estado;
+        }
+
+        function cargarEventos() {
+            const grid = document.getElementById('eventosGrid');
+            grid.innerHTML = '';
+
+            eventosData.forEach(evento => {
+                const fechaFormateada = new Date(evento.fechaInicio + 'T00:00:00').toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                const card = document.createElement('div');
+                card.className = 'evento-card';
+                card.dataset.estado = evento.estado;
+                card.dataset.nombre = evento.nombre.toLowerCase();
+                
+                if (evento.estado === 'activo') {
+                    card.classList.add('evento-inscrito');
+                }
+
+                card.innerHTML = `
+                    <div class="evento-card-header">
+                        <span class="evento-categoria">${evento.categoriaTexto}</span>
+                        ${getEstadoBadge(evento.estado)}
+                    </div>
+                    <h3 class="evento-titulo">${evento.nombre}</h3>
+                    <p class="evento-descripcion">${evento.descripcion}</p>
+                    <div class="evento-meta">
+                        <span>📅 ${fechaFormateada}</span>
+                        <span>📍 ${evento.ciudad}</span>
+                    </div>
+                    <div class="evento-info-extra">
+                        <span>👥 ${evento.inscritos}/${evento.cupos}</span>
+                        <span>🤝 ${evento.reunionesGeneradas} reuniones</span>
+                    </div>
+                    <div class="evento-actions">
+                        <button class="btn btn-secondary" onclick="verDetalleEvento(${evento.id})">👁 Ver Detalle</button>
+                        ${evento.estado === 'activo' || evento.estado === 'borrador' ? 
+                            `<button class="btn btn-primary" onclick="editarEvento(${evento.id})">✏️ Editar</button>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function verDetalleEvento(id) {
+            const evento = eventosData.find(e => e.id === id);
+            if (!evento) return;
+
+            const fechaInicioF = new Date(evento.fechaInicio + 'T00:00:00').toLocaleDateString('es-ES', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            const empresasHTML = evento.empresasInscritas.length > 0 ? `
+                <div style="margin-top: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem;">👥 Empresas Inscritas (${evento.empresasInscritas.length})</h4>
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                        <table style="margin: 0; border: none; box-shadow: none;">
+                            <thead>
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>Sector</th>
+                                    <th>Fecha Inscripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${evento.empresasInscritas.map(emp => `
+                                    <tr>
+                                        <td>${emp.nombre}</td>
+                                        <td><small>${emp.sector}</small></td>
+                                        <td><small>${new Date(emp.fecha + 'T00:00:00').toLocaleDateString('es-ES')}</small></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : '<p style="color: var(--text-secondary); margin-top: 1rem;">No hay empresas inscritas aún.</p>';
+
+            document.getElementById('modalEventoContent').innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <span class="evento-categoria">${evento.categoriaTexto}</span>
+                        <h3 style="margin: 0.5rem 0;">${evento.nombre}</h3>
+                        ${getEstadoBadge(evento.estado)}
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 1.5rem;">${evento.descripcion}</p>
+
+                <div class="info-grid" style="margin-bottom: 1rem;">
+                    <div class="info-card">
+                        <div class="info-card-icon">📅</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Fecha</span>
+                            <span class="info-value">${fechaInicioF}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">🕐</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Horario</span>
+                            <span class="info-value">${evento.horaInicio} - ${evento.horaFin}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">📍</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Ubicación</span>
+                            <span class="info-value">${evento.lugar}, ${evento.ciudad}</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">💻</div>
+                        <div class="info-card-content">
+                            <span class="info-label">Modalidad</span>
+                            <span class="info-value">${evento.modalidad}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="docs-grid">
+                    <div class="doc-item">
+                        <span class="doc-label">Cupos</span>
+                        <span class="doc-value">${evento.inscritos} / ${evento.cupos} inscritos</span>
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Mesas/Salas</span>
+                        <span class="doc-value">${evento.mesas} disponibles</span>
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Duración Reuniones</span>
+                        <span class="doc-value">${evento.duracionReunion} minutos</span>
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Valor Inscripción</span>
+                        <span class="doc-value">${evento.esGratis ? 'Gratuito' : '$' + evento.valorInscripcion.toLocaleString() + ' COP'}</span>
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Reuniones Generadas</span>
+                        <span class="doc-value">${evento.reunionesGeneradas}</span>
+                    </div>
+                    <div class="doc-item">
+                        <span class="doc-label">Organizador</span>
+                        <span class="doc-value">${evento.organizador}</span>
+                    </div>
+                </div>
+
+                ${empresasHTML}
+            `;
+
+            document.getElementById('modalEvento').style.display = 'block';
+        }
+
+        function editarEvento(id) {
+            alert('Redirigiendo al formulario de edición del evento #' + id);
+            // En producción: window.location.href = 'editar-evento.html?id=' + id;
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalEvento').style.display = 'none';
+        }
+
+        // Filtros
+        document.getElementById('busquedaEvento').addEventListener('input', filtrarEventos);
+        document.querySelectorAll('.categoria-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                document.querySelectorAll('.categoria-tag').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                filtrarEventos();
+            });
+        });
+
+        function filtrarEventos() {
+            const busqueda = document.getElementById('busquedaEvento').value.toLowerCase();
+            const estadoActivo = document.querySelector('.categoria-tag.active').dataset.estado;
+            const cards = document.querySelectorAll('#eventosGrid .evento-card');
+            let visibles = 0;
+
+            cards.forEach(card => {
+                const nombre = card.dataset.nombre;
+                const estado = card.dataset.estado;
+                
+                const cumpleBusqueda = nombre.includes(busqueda);
+                const cumpleEstado = estadoActivo === 'todos' || estado === estadoActivo;
+
+                if (cumpleBusqueda && cumpleEstado) {
+                    card.style.display = 'block';
+                    visibles++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('sinResultados').style.display = visibles === 0 ? 'block' : 'none';
+        }
+
+        // Click fuera del modal para cerrar
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalEvento');
+            if (event.target === modal) {
+                cerrarModal();
+            }
+        }
+
+        // Inicializar
+        cargarEventos();
+    </script>
+    <script src="../js/components/sidebar-admin-evento.js"></script>
+</body>
+
+</html>
