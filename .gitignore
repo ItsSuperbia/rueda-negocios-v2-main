@@ -16,11 +16,13 @@ backend/coverage/
 backend/.nyc_output/
 
 # ====== FRONTEND ======
-frontend/node_modules/
-frontend/dist/
-frontend/.env
-frontend/package-lock.json
-frontend/npm-debug.log*
+frontend-next/node_modules
+frontend-next/.next
+frontend-next/out
+frontend-next/.env.local
+frontend-next/.env
+frontend-next/*.tsbuildinfo
+
 
 # Live Server / temp
 .vscode/
@@ -34,3 +36,7 @@ Thumbs.db
 *.tmp
 *.log
 .env
+
+
+# ======= OTHERS ========
+ANALISIS_TECNICO_SENIOR.md
