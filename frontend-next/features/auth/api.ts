@@ -13,6 +13,13 @@ export function login(payload: LoginPayload) {
   });
 }
 
+export async function registerUser(payload: FormData) {
+  return apiRequest<{ message?: string }>("/api/users/register", {
+    method: "POST",
+    body: payload
+  });
+}
+
 export function getProfile(token: string) {
   return apiRequest<LoginResponse["user"]>("/api/users/profile", {
     method: "GET",

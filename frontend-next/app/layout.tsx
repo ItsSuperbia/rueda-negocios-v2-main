@@ -8,7 +8,10 @@ const headingFont = Space_Grotesk({ subsets: ["latin"], variable: "--font-headin
 
 export const metadata: Metadata = {
   title: "Rueda de Negocios | Plataforma SaaS",
-  description: "Gestión de eventos, matchmaking y reuniones empresariales multi-rol."
+  description: "Gestión de eventos, matchmaking y reuniones empresariales multi-rol.",
+  icons: {
+    icon: "/images/icons/icon_favicon_EventConnect.png"
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

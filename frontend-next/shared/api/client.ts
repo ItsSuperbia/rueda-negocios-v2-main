@@ -21,15 +21,17 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://gisistinfo.unica
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const { method = "GET", body, token, headers } = options;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const baseHeaders: HeadersInit = isFormData ? {} : { "Content-Type": "application/json" };
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
-      "Content-Type": "application/json",
+      ...baseHeaders,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     cache: "no-store"
   });
 

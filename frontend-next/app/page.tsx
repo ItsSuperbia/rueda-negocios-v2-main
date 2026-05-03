@@ -3,11 +3,18 @@ import Image from "next/image";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-canvas text-ink">
+    <div className="min-h-screen bg-canvas text-ink "> 
       <nav className="sticky top-0 z-30 border-b border-slate-200/70 bg-canvas/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[88rem] items-center justify-between px-4 py-5 lg:px-8">
-          <Link className="font-[var(--font-heading)] text-xl font-bold" href="/">
-            EventConnect
+          <Link className="flex items-center" href="/" aria-label="EventConnect">
+            <Image
+              src="/images/icons/icon_navbar_logo_EventConnect.png"
+              alt="EventConnect"
+              width={160}
+              height={40}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -30,8 +37,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <header id="inicio" className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_20%,rgba(244,162,97,0.22),transparent_38%),radial-gradient(circle_at_85%_10%,rgba(15,139,141,0.2),transparent_30%),linear-gradient(120deg,#fefcf7_0%,#ecf5f4_100%)]" />
+      <section id="inicio" className="relative overflow-hidden">
         <div className="mx-auto grid w-full max-w-[88rem] gap-12 px-4 py-20 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-28">
           <div className="fade-up">
             <h1 className="font-[var(--font-heading)] text-4xl font-bold leading-tight text-ink sm:text-5xl lg:text-6xl">
@@ -39,7 +45,7 @@ export default function HomePage() {
               <br />
               Oportunidades Reales
             </h1>
-            <p className="mt-8 max-w-2xl text-base text-muted sm:text-lg">
+            <p className="mt-8 max-w-2xl text-lg text-muted sm:text-xl">
               Facilitamos la conexion entre empresas y emprendedores con recintos de primer nivel. Gestiona tus citas, encuentra
               proveedores y expande tu red profesional.
             </p>
@@ -102,12 +108,12 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
       <section className="px-4 pb-14 lg:px-8" id="como-funciona">
         <div className="mx-auto max-w-[88rem] rounded-xl2 border border-slate-200 bg-white/80 p-8 shadow-card lg:p-10">
-          <h2 className="font-[var(--font-heading)] text-2xl font-bold">Como Funciona</h2>
-          <p className="mt-4 max-w-4xl text-sm text-muted">
+          <h2 className="font-[var(--font-heading)] text-4xl font-bold">Como Funciona</h2>
+          <p className="mt-4 max-w-4x1 text-base text-muted sm:text-lg">
             Centraliza registro, matchmaking, agenda y seguimiento en una experiencia comercial unificada para organizadores,
             ofertantes y demandantes.
           </p>
@@ -117,7 +123,9 @@ export default function HomePage() {
       <section className="px-4 py-20 lg:px-8" id="servicios">
         <div className="mx-auto w-full max-w-[88rem]">
           <h2 className="text-center font-[var(--font-heading)] text-3xl font-bold">Potenciando a Empresas y MiPymes</h2>
-          <p className="mx-auto mt-5 max-w-3xl text-center text-sm text-muted">Una plataforma integral para organizar eventos de impacto.</p>
+          <p className="mx-auto mt-5 max-w-3xl text-center text-base text-muted sm:text-lg">
+            Una plataforma integral para organizar eventos de impacto.
+          </p>
 
           <div className="mt-12 space-y-8 lg:space-y-10">
             <section className="relative min-h-[18rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 lg:min-h-[20rem]">
@@ -132,7 +140,7 @@ export default function HomePage() {
               <div className="relative z-10 flex h-full max-w-2xl flex-col justify-end p-8 text-white lg:p-10">
                 <p className="text-3xl">📅</p>
                 <h3 className="mt-3 text-2xl font-semibold">Reserva Facil</h3>
-                <p className="mt-2 text-sm text-white/85">
+                <p className="mt-2 text-base text-white/85 sm:text-lg">
                   Reserva tu espacio ideal en el Centro de Convenciones con nuestro proceso simplificado.
                 </p>
               </div>
@@ -150,7 +158,7 @@ export default function HomePage() {
               <div className="relative z-10 flex h-full max-w-2xl flex-col justify-end p-8 text-white lg:p-10">
                 <p className="text-3xl">🤝</p>
                 <h3 className="mt-3 text-2xl font-semibold">Matchmaking Inteligente</h3>
-                <p className="mt-2 text-sm text-white/85">Conecta automaticamente con empresas que buscan lo que tu ofreces.</p>
+                <p className="mt-2 text-base text-white/85 sm:text-lg">Conecta automaticamente con empresas que buscan lo que tu ofreces.</p>
               </div>
             </section>
 
@@ -166,7 +174,7 @@ export default function HomePage() {
               <div className="relative z-10 flex h-full max-w-2xl flex-col justify-end p-8 text-white lg:p-10">
                 <p className="text-3xl">📊</p>
                 <h3 className="mt-3 text-2xl font-semibold">Agenda Digital</h3>
-                <p className="mt-2 text-sm text-white/85">
+                <p className="mt-2 text-base text-white/85 sm:text-lg">
                   Gestiona todas tus reuniones en un solo lugar con notificaciones en tiempo real.
                 </p>
               </div>
@@ -179,9 +187,9 @@ export default function HomePage() {
       <section className="bg-surface/60 px-4 py-20 lg:px-8">
         <div className="mx-auto max-w-5xl text-center">
           <h2 className="font-[var(--font-heading)] text-3xl font-bold">Listo para expandir tu negocio?</h2>
-          <p className="mt-5 text-sm text-muted">Unete a cientos de empresas que ya estan cerrando negocios.</p>
+          <p className="mt-5 text-base text-muted sm:text-lg">Unete a cientos de empresas que ya estan cerrando negocios.</p>
           <Link className="mt-8 inline-flex rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95" href="/register">
-            Crear Cuenta Gratis
+            Crear Cuenta
           </Link>
         </div>
       </section>
