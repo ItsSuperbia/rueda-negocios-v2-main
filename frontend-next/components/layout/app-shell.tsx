@@ -49,8 +49,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navLinks = useMemo(() => linksByRole[role ?? ""] ?? [], [role]);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 lg:flex-row lg:gap-6 lg:px-6">
-      <aside className="rounded-xl2 bg-white/90 p-4 shadow-card ring-1 ring-slate-100 lg:sticky lg:top-6 lg:h-fit lg:w-72">
+    <div className="mx-auto flex min-h-screen w-full max-w-8xl flex-col px-4 py-4 lg:flex-row lg:gap-6 lg:px-6">
+      <aside className="rounded-xl2 bg-white/40 p-4 shadow-card ring-1 ring-slate-100 lg:sticky lg:top-6 lg:h-fit lg:w-72">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">Rueda de Negocios</p>
           <h2 className="mt-1 font-[var(--font-heading)] text-xl font-bold">Panel {role}</h2>
@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <Button
           className="mt-6 w-full"
-          variant="ghost"
+          variant="danger"
           onClick={() => {
             clearSession();
             router.replace("/login");

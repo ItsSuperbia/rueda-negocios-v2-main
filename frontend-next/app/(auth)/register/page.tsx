@@ -7,7 +7,7 @@ export default function LoginPage() {
     <div className="bg-background">
       
       <nav className="sticky top-0 z-30 border-b border-slate-200/70 bg-canvas/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[88rem] items-center justify-between px-4 py-5 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[120rem] items-center justify-between px-4 py-5 lg:px-8">
           <Link className="flex items-center" href="/" aria-label="EventConnect">
             <Image
               src="/images/icons/icon_navbar_logo_EventConnect.png"
@@ -33,6 +33,7 @@ export default function LoginPage() {
       <section className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-8 lg:px-12">
         {/* Card del Formulario */}
         <div className="mx-auto w-full max-w-[88rem] rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-200 sm:p-8 lg:p-12">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Registrate para empezar</p>
           <RegisterForm />
         </div>
       </section>
