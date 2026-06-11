@@ -21,14 +21,15 @@ exports.registerUser = async (req, res) => {
 
         const getFile = (field) => {
             const file = req.files?.find(f => f.fieldname === field);
-            return file ? file.path : null;
+            return file ? file.path : "";
         };
 
 
         if (!req.body) req.body = {};
 
-        // convertir "on" → true/false
-        req.body.aceptaTerminos = req.body.aceptaTerminos === "on";
+        // convertir checkbox/strings a boolean
+        const aceptaTerminosRaw = req.body.aceptaTerminos;
+        req.body.aceptaTerminos = aceptaTerminosRaw === "on" || aceptaTerminosRaw === "true" || aceptaTerminosRaw === true;
 
         // construir objeto limpio de usuario
         const data = {
@@ -42,23 +43,26 @@ exports.registerUser = async (req, res) => {
             aceptaTerminos: req.body.aceptaTerminos,
 
             // archivos
-            logoEmpresa: getFile(req.files, "logoEmpresa"),
+            logoEmpresa: getFile("logoEmpresa"),
 
             // NO FORMALIZADA
             rutProvisional: req.body.rutProvisional || null,
-            rutProvisionalFile: getFile(req.files, "rutProvisionalFile"),
-            comprobanteMatricula: getFile(req.files, "comprobanteMatricula"),
-            cedulaSolicitanteFile: getFile(req.files, "cedulaSolicitanteFile"),
+            documentosNoFormalizados: {
+                comprobanteMatricula: getFile("comprobanteMatricula"),
+                cedulaSolicitante: getFile("cedulaSolicitanteFile"),
+            },
 
             // FORMALIZADA
             nit: req.body.nit || null,
-            rutFile: getFile(req.files, "rutFile"),
-            certificadoExistenciaFile: getFile(req.files, "certificadoExistenciaFile"),
-            cedulaRepresentanteFile: getFile(req.files, "cedulaRepresentanteFile"),
+            documentosFormalizados: {
+                rut: getFile("rutFile"),
+                certificadoExistencia: getFile("certificadoExistenciaFile"),
+                cedulaRepresentante: getFile("cedulaRepresentanteFile"),
+            },
 
             // Catálogos PDF
-            catalogoPDF: getFile(req.files, "catalogoFile"),
-            necesidadesPDF: getFile(req.files, "necesidadesFile"),
+            catalogoPDF: getFile("catalogoFile"),
+            necesidadesPDF: getFile("necesidadesFile"),
 
             // estado inicial
             estadoRegistro: "pendiente"
@@ -158,18 +162,32 @@ exports.updateProfile = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-        const {
-            nombreEmpresa,
-            logoEmpresa,
-            sector,
-            formalizada,
-            datosContacto,
-            representante,
-            documentosFormalizados,
-            documentosNoFormalizados,
-            catalogoPDF,
-            necesidadesPDF
-        } = req.body;
+        req.files = req.files || [];
+
+        const getFile = (field) => {
+            const file = req.files?.find(f => f.fieldname === field);
+            return file ? file.path : "";
+        };
+
+        const parseJson = (value) => {
+            if (!value) return null;
+            if (typeof value === "object") return value;
+            try {
+                return JSON.parse(value);
+            } catch (error) {
+                return null;
+            }
+        };
+
+        const nombreEmpresa = req.body.nombreEmpresa;
+        const sector = req.body.sector;
+        const formalizadaProvided = typeof req.body.formalizada !== "undefined";
+        const formalizadaValue = req.body.formalizada === "true" || req.body.formalizada === true;
+        const datosContacto = parseJson(req.body.datosContacto);
+        const representante = parseJson(req.body.representante);
+        const rutFile = getFile("rutFile");
+        const logoFile = getFile("logoEmpresa");
+        const catalogoFile = getFile("catalogoFile");
 
         // ⚠️ No se pueden cambiar estos campos
         if (req.body.email || req.body.password || req.body.role || req.body.nit || req.body.rutProvisional) {
@@ -177,50 +195,49 @@ exports.updateProfile = async (req, res) => {
         }
 
         // 🔐 Verificar cambio de formalización
-        if (user.formalizada && formalizada === false) {
+        if (user.formalizada && formalizadaProvided && formalizadaValue === false) {
             return res.status(400).json({
                 message: "No se puede cambiar de empresa formalizada a no formalizada"
             });
         }
 
-        // 📁 Si cambia de no formalizada a formalizada → debe enviar documentos formalizados
-        if (!user.formalizada && formalizada === true) {
-            if (
-                !documentosFormalizados ||
-                !documentosFormalizados.rut ||
-                !documentosFormalizados.certificadoExistencia ||
-                !documentosFormalizados.cedulaRepresentante
-            ) {
-                return res.status(400).json({
-                    message: "Debe adjuntar los documentos de empresa formalizada (RUT, certificado y cédula representante)"
-                });
-            }
-            user.formalizada = true;
-            user.documentosFormalizados = documentosFormalizados;
-            user.documentosNoFormalizados = {};
+        if (!user.formalizada && formalizadaProvided && formalizadaValue === true && !rutFile) {
+            return res.status(400).json({
+                message: "Debe adjuntar el RUT en PDF para formalizar la empresa"
+            });
         }
 
-        // 🧑‍💼 Si cambia el representante, se debe enviar nueva cédula
+        if (!user.formalizada && rutFile && (!formalizadaProvided || formalizadaValue !== true)) {
+            return res.status(400).json({
+                message: "El RUT solo se puede adjuntar si la empresa esta formalizada"
+            });
+        }
+
+        if (!user.formalizada && formalizadaProvided && formalizadaValue === true) {
+            user.formalizada = true;
+            user.documentosFormalizados = {
+                ...user.documentosFormalizados,
+                rut: rutFile
+            };
+        }
+
+        if (user.formalizada && rutFile) {
+            user.documentosFormalizados = {
+                ...user.documentosFormalizados,
+                rut: rutFile
+            };
+        }
+
         if (representante) {
-            const nombreCambia = representante.nombre && representante.nombre !== user.representante.nombre;
-            const documentoCambia = representante.documento && representante.documento !== user.representante.documento;
-
-            if ((nombreCambia || documentoCambia) && (!documentosFormalizados || !documentosFormalizados.cedulaRepresentante)) {
-                return res.status(400).json({
-                    message: "Debe adjuntar nuevamente la cédula del representante si cambia el nombre o documento"
-                });
-            }
-
             user.representante = { ...user.representante, ...representante };
         }
 
         // ✅ Actualizar los campos permitidos
         if (nombreEmpresa) user.nombreEmpresa = nombreEmpresa;
-        if (logoEmpresa) user.logoEmpresa = logoEmpresa;
+        if (logoFile) user.logoEmpresa = logoFile;
         if (sector) user.sector = sector;
         if (datosContacto) user.datosContacto = { ...user.datosContacto, ...datosContacto };
-        if (catalogoPDF) user.catalogoPDF = catalogoPDF;
-        if (necesidadesPDF) user.necesidadesPDF = necesidadesPDF;
+        if (catalogoFile && user.role === "ofertante") user.catalogoPDF = catalogoFile;
 
         // Guardar cambios
         await user.save();

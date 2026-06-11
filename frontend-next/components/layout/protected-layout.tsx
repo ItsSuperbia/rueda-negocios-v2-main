@@ -6,9 +6,9 @@ import { useAuthStore } from "@/store/auth-store";
 
 const restrictedByRole: Record<string, string[]> = {
   adminSistema: ["/usuarios", "/eventos", "/dashboard", "/mensajes", "/reuniones"],
-  adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones"],
-  ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones"],
-  demandante: ["/dashboard", "/eventos", "/mensajes", "/reuniones"]
+  adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil"],
+  ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil"],
+  demandante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil"]
 };
 
 export function ProtectedLayout({ children }: { children: ReactNode }) {

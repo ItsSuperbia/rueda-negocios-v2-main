@@ -1,20 +1,34 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusChip } from "@/components/ui/status-chip";
-import { createEvento, getPendingEventos, updateEventoStatus } from "@/features/eventos/api";
-import { EventFormValues, eventSchema } from "@/features/eventos/schema";
+import { getEventoById, getPendingEventos, updateEventoStatus } from "@/features/eventos/api";
+import { AdminEventoEventos } from "@/features/eventos/components/admin-evento-eventos";
+import { EventoCreateForm } from "@/features/eventos/components/evento-create-form";
 import { useAuthStore } from "@/store/auth-store";
 
 export function EventosWorkspace() {
   const token = useAuthStore((state) => state.token);
   const role = useAuthStore((state) => state.role);
   const queryClient = useQueryClient();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedEventoId, setSelectedEventoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedEventoId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const pendingEventosQuery = useQuery({
     queryKey: ["eventos", "pendientes"],
@@ -27,38 +41,11 @@ export function EventosWorkspace() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["eventos", "pendientes"] })
   });
 
-  const createMutation = useMutation({
-    mutationFn: createEvento,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["eventos", "pendientes"] });
-      reset();
-    }
+  const selectedEventoQuery = useQuery({
+    queryKey: ["eventos", "detail", selectedEventoId],
+    queryFn: () => getEventoById({ token: token as string, eventoId: selectedEventoId as string }),
+    enabled: Boolean(token) && role === "adminSistema" && Boolean(selectedEventoId)
   });
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm<EventFormValues>({
-    resolver: zodResolver(eventSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      startDate: "",
-      endDate: "",
-      durationDays: 1,
-      location: "",
-      modalidad: "presencial",
-      cupos: 20,
-      valorInscripcion: 0,
-      enfoque: ""
-    }
-  });
-
-  const onSubmit = (values: EventFormValues) => {
-    createMutation.mutate({ token: token as string, data: values });
-  };
 
   if (!role) {
     return <p className="text-sm text-muted">Sin rol activo.</p>;
@@ -66,92 +53,25 @@ export function EventosWorkspace() {
 
   return (
     <section className="space-y-5">
-      <Card>
-        <h1 className="font-[var(--font-heading)] text-2xl font-bold">Gestión de eventos</h1>
-        <p className="mt-1 text-sm text-muted">Flujo segmentado por rol para crear o moderar eventos.</p>
-      </Card>
-
       {role === "adminEvento" ? (
-        <Card className="fade-up">
-          <h2 className="mb-4 text-lg font-semibold">Crear nuevo evento</h2>
-          <form className="grid gap-3 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm">Título</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" {...register("title")} />
-              {errors.title ? <p className="mt-1 text-xs text-danger">{errors.title.message}</p> : null}
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm">Descripción</label>
-              <textarea className="w-full rounded-xl border border-slate-300 px-3 py-2" rows={4} {...register("description")} />
-              {errors.description ? <p className="mt-1 text-xs text-danger">{errors.description.message}</p> : null}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm">Fecha inicio</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" type="date" {...register("startDate")} />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm">Fecha fin</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" type="date" {...register("endDate")} />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm">Duración (días)</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" type="number" {...register("durationDays")} />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm">Cupos</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" type="number" {...register("cupos")} />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm">Modalidad</label>
-              <select className="w-full rounded-xl border border-slate-300 px-3 py-2" {...register("modalidad")}>
-                <option value="presencial">Presencial</option>
-                <option value="virtual">Virtual</option>
-                <option value="mixto">Mixto</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm">Valor inscripción</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" type="number" {...register("valorInscripcion")} />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm">Ubicación</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" {...register("location")} />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm">Enfoque</label>
-              <input className="w-full rounded-xl border border-slate-300 px-3 py-2" {...register("enfoque")} />
-            </div>
-
-            <div className="md:col-span-2 flex items-center justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => reset()}>
-                Limpiar
-              </Button>
-              <Button loading={createMutation.isPending} type="submit">
-                Crear evento
-              </Button>
-            </div>
-          </form>
-
-          {createMutation.isSuccess ? (
-            <p className="mt-3 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">Evento enviado para aprobación.</p>
+        <>
+          {showCreateForm ? (
+            <EventoCreateForm onCancel={() => setShowCreateForm(false)} onCreated={() => setShowCreateForm(false)} />
           ) : null}
-
-          {createMutation.isError ? (
-            <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">No fue posible crear el evento.</p>
-          ) : null}
-        </Card>
+          <AdminEventoEventos onCreate={() => setShowCreateForm(true)} />
+        </>
       ) : null}
 
       {role === "adminSistema" ? (
+        <>
+          <Card>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="font-[var(--font-heading)] text-2xl font-bold">Gestión de eventos</h1>
+                <p className="mt-1 text-sm text-muted">Flujo segmentado por rol para crear o moderar eventos.</p>
+              </div>
+            </div>
+          </Card>
         <Card className="fade-up">
           <h2 className="mb-4 text-lg font-semibold">Eventos pendientes por moderar</h2>
 
@@ -179,6 +99,9 @@ export function EventosWorkspace() {
                   <div className="flex flex-col items-start gap-2 md:items-end">
                     <StatusChip status={evento.estadoEvento} />
                     <div className="flex gap-2">
+                      <Button variant="ghost" onClick={() => setSelectedEventoId(evento._id)}>
+                        Ver detalle
+                      </Button>
                       <Button
                         variant="secondary"
                         onClick={() =>
@@ -210,6 +133,79 @@ export function EventosWorkspace() {
             ))}
           </div>
         </Card>
+
+        {selectedEventoId ? (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4"
+            onClick={() => setSelectedEventoId(null)}
+          >
+            <div
+              className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {selectedEventoQuery.isPending ? <p className="text-sm text-muted">Cargando detalle del evento...</p> : null}
+              {selectedEventoQuery.isError ? (
+                <EmptyState title="Error al cargar el evento" description="No se pudo recuperar el detalle del evento." />
+              ) : null}
+
+              {selectedEventoQuery.data ? (
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-xl font-semibold text-ink">Detalle del evento</h3>
+                    <StatusChip status={selectedEventoQuery.data.estadoEvento} />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Título</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{selectedEventoQuery.data.title}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Categoría</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{selectedEventoQuery.data.categoria ?? selectedEventoQuery.data.enfoque}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Modalidad</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{selectedEventoQuery.data.modalidad}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Ubicación</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{selectedEventoQuery.data.location}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Inicio</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{new Date(selectedEventoQuery.data.startDate).toLocaleString("es-CO")}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Finalización</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{new Date(selectedEventoQuery.data.endDate).toLocaleString("es-CO")}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Cupos</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{selectedEventoQuery.data.cupos}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold text-muted">Inscritos</p>
+                      <p className="mt-2 text-sm font-semibold text-ink">{selectedEventoQuery.data.inscritos ?? 0}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold text-muted">Descripción</p>
+                    <p className="mt-2 text-sm text-ink">{selectedEventoQuery.data.description}</p>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button variant="secondary" onClick={() => setSelectedEventoId(null)}>
+                      Cerrar
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+        </>
       ) : null}
 
       {role !== "adminSistema" && role !== "adminEvento" ? (

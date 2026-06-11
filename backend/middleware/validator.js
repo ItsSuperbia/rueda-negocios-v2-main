@@ -14,20 +14,29 @@ exports.validateRegister = [
         .isIn(["adminSistema", "adminEvento", "ofertante", "demandante"])
         .withMessage("El rol no es válido"),
 
-    body("nombreEmpresa")
-        .notEmpty()
-        .withMessage("El nombre de la empresa es obligatorio"),
+    body("nombreEmpresa").custom((value, { req }) => {
+        const role = req.body.role;
+        if (role === "adminSistema" || role === "adminEvento") {
+            return true;
+        }
+        if (!value) {
+            throw new Error("El nombre de la empresa es obligatorio");
+        }
+        return true;
+    }),
 
     body("sector")
+        .if(body("role").not().equals("adminSistema"))
         .notEmpty()
         .withMessage("El sector es obligatorio"),
 
     body("formalizada")
+        .if(body("role").not().equals("adminSistema"))
         .isBoolean()
         .withMessage("El campo 'formalizada' debe ser verdadero o falso"),
 
     body("aceptaTerminos")
-        .equals("true")
+        .custom((value) => value === "true" || value === "on" || value === true)
         .withMessage("Debe aceptar los términos y condiciones"),
 
     (req, res, next) => {

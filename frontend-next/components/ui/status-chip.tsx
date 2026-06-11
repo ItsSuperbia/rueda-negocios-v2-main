@@ -6,6 +6,7 @@ interface StatusChipProps {
 
 export function StatusChip({ status }: StatusChipProps) {
   const classes: Record<string, string> = {
+    borrador: "bg-slate-100 text-slate-700 ring-slate-300",
     pendiente: "bg-warning/10 text-warning ring-warning/30",
     aprobado: "bg-success/10 text-success ring-success/30",
     rechazado: "bg-danger/10 text-danger ring-danger/30",

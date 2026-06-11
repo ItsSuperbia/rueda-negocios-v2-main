@@ -23,18 +23,21 @@ const linksByRole: Record<string, NavLink[]> = {
   adminEvento: [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/eventos", label: "Eventos" },
+    { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" }
   ],
   ofertante: [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/eventos", label: "Eventos" },
     { href: "/mensajes", label: "Mensajería" },
+    { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" }
   ],
   demandante: [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/eventos", label: "Eventos" },
     { href: "/mensajes", label: "Mensajería" },
+    { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" }
   ]
 };

@@ -13,6 +13,7 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 const { adminOnly } = require("../middleware/adminMiddleware");
 const upload = require("../middleware/upload");
+const { validateRegister, validateUpdateUser } = require("../middleware/validator");
 
 // ================================
 //  REGISTRO (con archivos reales)
@@ -20,6 +21,7 @@ const upload = require("../middleware/upload");
 router.post(
     "/register",
     upload.any(),
+    validateRegister,
     registerUser
 );
 
@@ -30,7 +32,7 @@ router.post("/login", loginUser);
 router.get("/profile", protect, getProfile);
 
 // ACTUALIZAR PERFIL
-router.put("/update", protect, updateProfile);
+router.put("/update", protect, upload.any(), validateUpdateUser, updateProfile);
 
 // ELIMINAR USUARIO
 router.delete("/:id", protect, deleteUser);
@@ -68,6 +70,11 @@ router.put("/:id/estado", protect, adminOnly, async (req, res) => {
     try {
         const user = await require("../models/User").findById(req.params.id);
         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+        const allowedEstados = ["pendiente", "aprobado", "rechazado"];
+        if (!allowedEstados.includes(req.body.estado)) {
+            return res.status(400).json({ message: "Estado de registro no válido" });
+        }
 
         user.estadoRegistro = req.body.estado; // <-- CAMBIO CORRECTO
         await user.save();

@@ -14,7 +14,7 @@ export const registerSchema = z
     role: z.enum(["ofertante", "demandante", "adminEvento"], {
       required_error: "Selecciona un tipo de participacion"
     }),
-    nombreEmpresa: z.string().min(1, "Ingresa el nombre de la empresa"),
+    nombreEmpresa: z.string().optional(),
     sector: z.string().min(1, "Selecciona un sector"),
     sectorOtro: z.string().optional(),
     formalizada: z.enum(["true", "false"], {
@@ -28,6 +28,16 @@ export const registerSchema = z
     })
   })
   .superRefine((values, ctx) => {
+    const nombreEmpresa = values.nombreEmpresa?.trim() ?? "";
+
+    if (values.role !== "adminEvento" && !nombreEmpresa) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["nombreEmpresa"],
+        message: "Ingresa el nombre de la empresa"
+      });
+    }
+
     if (values.sector === "Otro" && !values.sectorOtro) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
