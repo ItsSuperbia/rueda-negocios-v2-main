@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 
 const restrictedByRole: Record<string, string[]> = {
-  adminSistema: ["/usuarios", "/eventos", "/dashboard", "/mensajes", "/reuniones"],
-  adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil"],
-  ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil"],
+  adminSistema: ["/usuarios", "/eventos", "/dashboard", "/mensajes", "/reuniones", "/matches"],
+   adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil", "/matches"],
+  ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil",],
   demandante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil"]
 };
 
