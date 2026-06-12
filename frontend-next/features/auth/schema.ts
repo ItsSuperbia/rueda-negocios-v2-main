@@ -22,10 +22,7 @@ export const registerSchema = z
     }),
     nit: z.string().optional(),
     rutFile: z.any().optional(),
-    rutProvisional: z.string().optional(),
-    aceptaTerminos: z.boolean().refine((value) => value, {
-      message: "Debes aceptar los terminos"
-    })
+    rutProvisional: z.string().optional()
   })
   .superRefine((values, ctx) => {
     const nombreEmpresa = values.nombreEmpresa?.trim() ?? "";

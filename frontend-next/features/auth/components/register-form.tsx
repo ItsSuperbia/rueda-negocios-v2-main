@@ -8,10 +8,13 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { useRegisterMutation } from "@/features/auth/hooks";
 import { RegisterFormValues, registerSchema } from "@/features/auth/schema";
+import { DataPolicyModal } from "@/features/auth/components/data-policy-modal";
 
 export function RegisterForm() {
   const router = useRouter();
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [policyModalOpen, setPolicyModalOpen] = useState(false);
+  const [pendingValues, setPendingValues] = useState<RegisterFormValues | null>(null);
 
   const {
     register,
@@ -27,7 +30,6 @@ export function RegisterForm() {
       sectorOtro: "",
       nit: "",
       rutProvisional: "",
-      aceptaTerminos: false
     }
   });
 
@@ -43,9 +45,7 @@ export function RegisterForm() {
   const showNoFormalizadaDocs = formalizada === "false";
   const showSectorOtro = sector === "Otro";
 
-  const onSubmit: SubmitHandler<RegisterFormValues> = (values) => {
-    setSubmitSuccess(null);
-
+  const buildAndSubmitRegistration = (values: RegisterFormValues) => {
     const formData = new FormData();
     formData.append("email", values.email);
     formData.append("password", values.password);
@@ -53,8 +53,6 @@ export function RegisterForm() {
     formData.append("nombreEmpresa", values.nombreEmpresa ?? "");
     formData.append("sector", values.sector);
     formData.append("formalizada", values.formalizada);
-    formData.append("aceptaTerminos", values.aceptaTerminos ? "true" : "false");
-
     if (values.sectorOtro) {
       formData.append("sectorOtro", values.sectorOtro);
     }
@@ -72,13 +70,31 @@ export function RegisterForm() {
       formData.append("rutFile", rutFile);
     }
 
+    formData.append("aceptaTerminos", "true");
+
     mutate(formData, {
       onSuccess: () => {
         setSubmitSuccess("Registro exitoso. Por favor inicia sesion.");
+        setPendingValues(null);
         reset();
         router.push("/login");
       }
     });
+  };
+
+  const onSubmit: SubmitHandler<RegisterFormValues> = (values) => {
+    setSubmitSuccess(null);
+    setPendingValues(values);
+    setPolicyModalOpen(true);
+  };
+
+  const acceptPolicyAndRegister = () => {
+    if (!pendingValues) {
+      return;
+    }
+
+    setPolicyModalOpen(false);
+    buildAndSubmitRegistration(pendingValues);
   };
 
   return (
@@ -257,18 +273,6 @@ export function RegisterForm() {
         </section>
       ) : null}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-        <label className="flex items-start gap-3 text-sm text-muted">
-          <input
-            type="checkbox"
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
-            {...register("aceptaTerminos")}
-          />
-          <span>Acepto los terminos y condiciones</span>
-        </label>
-        {errors.aceptaTerminos ? <p className="mt-2 text-xs text-danger">{errors.aceptaTerminos.message}</p> : null}
-      </div>
-
       {error ? <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error.message}</p> : null}
       {submitSuccess ? <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{submitSuccess}</p> : null}
 
@@ -280,6 +284,15 @@ export function RegisterForm() {
           Ya tienes cuenta? Inicia sesion
         </Link>
       </div>
+
+      <DataPolicyModal
+        open={policyModalOpen}
+        onAccept={acceptPolicyAndRegister}
+        onClose={() => {
+          setPolicyModalOpen(false);
+          setPendingValues(null);
+        }}
+      />
     </form>
   );
 }
