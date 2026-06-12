@@ -1,5 +1,5 @@
 import { apiRequest } from "@/shared/api/client";
-import { AdminEventoDashboard, MatchEntity, MeetingEntity } from "@/shared/types/domain";
+import { AdminEventoDashboard, EmpresaEventosResumen, MatchEntity, MeetingEntity } from "@/shared/types/domain";
 
 export interface GenerateMatchesResult {
   message: string;
@@ -30,6 +30,13 @@ export function getMeetings(token: string) {
 
 export function getAdminEventoDashboard(token: string) {
   return apiRequest<AdminEventoDashboard>("/api/eventos/admin/dashboard", {
+    method: "GET",
+    token
+  });
+}
+
+export function getEmpresaEventosResumen(token: string) {
+  return apiRequest<EmpresaEventosResumen>("/api/eventos/empresa/resumen", {
     method: "GET",
     token
   });

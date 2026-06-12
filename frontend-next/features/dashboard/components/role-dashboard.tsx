@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { generateMatches, getAdminEventoDashboard, getMatches, getMeetings } from "@/features/dashboard/api";
+import { generateMatches, getAdminEventoDashboard, getEmpresaEventosResumen, getMatches, getMeetings } from "@/features/dashboard/api";
 import { getPendingEventos } from "@/features/eventos/api";
 import { getPendingUsers } from "@/features/usuarios/api";
 import { useAuthStore } from "@/store/auth-store";
@@ -30,6 +30,7 @@ const roleCopy: Record<string, { headline: string; summary: string; actions: { h
     headline: "Convierte matches en oportunidades",
     summary: "Monitorea reuniones y haz seguimiento comercial con foco en cierre.",
     actions: [
+      { href: "/eventos", label: "Ver eventos" },
       { href: "/reuniones", label: "Ver agenda" },
       { href: "/mensajes", label: "Abrir mensajería" }
     ]
@@ -38,6 +39,7 @@ const roleCopy: Record<string, { headline: string; summary: string; actions: { h
     headline: "Encuentra proveedores adecuados",
     summary: "Gestiona tus reuniones y prioriza contactos con mayor afinidad.",
     actions: [
+      { href: "/eventos", label: "Ver eventos" },
       { href: "/reuniones", label: "Ver agenda" },
       { href: "/mensajes", label: "Abrir mensajería" }
     ]
@@ -53,6 +55,7 @@ export function RoleDashboard() {
 
   const isAdminSistema = role === "adminSistema";
   const isAdminEvento = role === "adminEvento";
+  const isEmpresa = role === "ofertante" || role === "demandante";
 
   const pendingUsersQuery = useQuery({
     queryKey: ["dashboard", "adminSistema", "pendingUsers"],
@@ -72,6 +75,12 @@ export function RoleDashboard() {
     enabled: Boolean(token) && isAdminEvento
   });
 
+  const empresaEventosResumenQuery = useQuery({
+    queryKey: ["dashboard", "empresa", "eventosResumen"],
+    queryFn: () => getEmpresaEventosResumen(token as string),
+    enabled: Boolean(token) && isEmpresa
+  });
+
   const {
     data: matches,
     isPending: matchesLoading,
@@ -79,13 +88,13 @@ export function RoleDashboard() {
   } = useQuery({
     queryKey: ["dashboard", "matches"],
     queryFn: () => getMatches(token as string),
-    enabled: Boolean(token) && !isAdminEvento && !isAdminSistema
+    enabled: Boolean(token) && isEmpresa
   });
 
   const { data: meetings, isPending: meetingsLoading } = useQuery({
     queryKey: ["dashboard", "meetings"],
     queryFn: () => getMeetings(token as string),
-    enabled: Boolean(token) && !isAdminEvento && !isAdminSistema
+    enabled: Boolean(token) && isEmpresa
   });
 
   const generateMatchesMutation = useMutation({
@@ -243,7 +252,7 @@ export function RoleDashboard() {
           </div>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card className="fade-up bg-gradient-to-br from-accent/15 via-white to-white">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white">📊</span>
@@ -255,16 +264,25 @@ export function RoleDashboard() {
           </Card>
           <Card className="fade-up bg-gradient-to-br from-success/15 via-white to-white">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-white">👥</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-success text-white">🏢</span>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">Total inscritos</p>
-                <p className="mt-1 text-2xl font-bold text-ink">{stats.totalInscritos}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">Ofertantes inscritos</p>
+                <p className="mt-1 text-2xl font-bold text-ink">{stats.totalOfertantes}</p>
               </div>
             </div>
           </Card>
           <Card className="fade-up bg-gradient-to-br from-warning/15 via-white to-white">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning text-white">🤝</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning text-white">🛒</span>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted">Demandantes inscritos</p>
+                <p className="mt-1 text-2xl font-bold text-ink">{stats.totalDemandantes}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="fade-up bg-white/95">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/10 text-ink">🤝</span>
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted">Reuniones generadas</p>
                 <p className="mt-1 text-2xl font-bold text-ink">{stats.reunionesGeneradas}</p>
@@ -320,6 +338,11 @@ export function RoleDashboard() {
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
                       <span>📅 {formatDate(evento.startDate)}</span>
                       <span>👥 {`${inscritos}/${cupos}`}</span>
+                      {evento.inscripcionesResumen ? (
+                        <span>
+                          {evento.inscripcionesResumen.ofertantes} ofertantes · {evento.inscripcionesResumen.demandantes} demandantes
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-4">
                       <Link
@@ -345,6 +368,7 @@ export function RoleDashboard() {
 
   const acceptedMatches = matches?.filter((item) => item.status === "accepted").length ?? 0;
   const upcomingMeetings = meetings?.filter((item) => item.status === "scheduled").length ?? 0;
+  const eventosResumen = empresaEventosResumenQuery.data;
 
   return (
     <section className="space-y-5">
@@ -367,16 +391,46 @@ export function RoleDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="fade-up">
+          <p className="text-xs uppercase tracking-wide text-muted">Eventos inscritos</p>
+          <p className="mt-2 text-3xl font-bold">
+            {empresaEventosResumenQuery.isPending ? "..." : eventosResumen?.eventosInscritos ?? 0}
+          </p>
+        </Card>
+        <Card className="fade-up">
+          <p className="text-xs uppercase tracking-wide text-muted">Participantes en mis eventos</p>
+          <p className="mt-2 text-3xl font-bold">
+            {empresaEventosResumenQuery.isPending ? "..." : eventosResumen?.totalParticipantes ?? 0}
+          </p>
+        </Card>
+        <Card className="fade-up">
           <p className="text-xs uppercase tracking-wide text-muted">Matches totales</p>
           <p className="mt-2 text-3xl font-bold">{matchesLoading ? "..." : matches?.length ?? 0}</p>
         </Card>
         <Card className="fade-up">
-          <p className="text-xs uppercase tracking-wide text-muted">Matches aceptados</p>
-          <p className="mt-2 text-3xl font-bold">{matchesLoading ? "..." : acceptedMatches}</p>
-        </Card>
-        <Card className="fade-up">
           <p className="text-xs uppercase tracking-wide text-muted">Reuniones programadas</p>
           <p className="mt-2 text-3xl font-bold">{meetingsLoading ? "..." : upcomingMeetings}</p>
+        </Card>
+      </div>
+
+      {eventosResumen?.proximoEvento?.inscripcionesResumen ? (
+        <Card className="fade-up bg-white/95">
+          <h2 className="text-lg font-semibold text-ink">Próximo evento inscrito</h2>
+          <p className="mt-2 text-sm font-medium text-ink">{eventosResumen.proximoEvento.title}</p>
+          <p className="mt-2 text-sm text-muted">
+            {eventosResumen.proximoEvento.inscripcionesResumen.ofertantes} ofertantes ·{" "}
+            {eventosResumen.proximoEvento.inscripcionesResumen.demandantes} demandantes ·{" "}
+            {eventosResumen.proximoEvento.inscripcionesResumen.total} participantes
+          </p>
+          <Link className="mt-4 inline-flex rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-95" href="/eventos">
+            Ver eventos
+          </Link>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="fade-up">
+          <p className="text-xs uppercase tracking-wide text-muted">Matches aceptados</p>
+          <p className="mt-2 text-3xl font-bold">{matchesLoading ? "..." : acceptedMatches}</p>
         </Card>
         <Card className="fade-up">
           <p className="text-xs uppercase tracking-wide text-muted">Total reuniones</p>

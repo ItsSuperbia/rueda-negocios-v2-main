@@ -95,13 +95,45 @@ export interface Evento {
   pais?: string;
   linkVirtual?: string;
   estadoEvento: "borrador" | "pendiente" | "aprobado" | "rechazado";
+  estaInscrito?: boolean;
+  inscripcionEstado?: "activa" | "cancelada" | null;
+  inscripcionesResumen?: InscripcionesResumen;
   createdAt?: string;
+}
+
+export interface InscripcionesResumen {
+  total: number;
+  ofertantes: number;
+  demandantes: number;
+}
+
+export interface EventoInscripcionParticipante {
+  _id: string;
+  role: "ofertante" | "demandante";
+  createdAt: string;
+  user: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa">;
+}
+
+export interface EventoInscripcionesResponse {
+  stats: InscripcionesResumen;
+  data: EventoInscripcionParticipante[];
+  meta: PaginationMeta;
+}
+
+export interface EmpresaEventosResumen {
+  eventosInscritos: number;
+  totalParticipantes: number;
+  proximoEvento: (Pick<Evento, "_id" | "title" | "startDate" | "endDate" | "cupos" | "inscritos"> & {
+    inscripcionesResumen?: InscripcionesResumen;
+  }) | null;
 }
 
 export interface AdminEventoDashboard {
   stats: {
     eventosActivos: number;
     totalInscritos: number;
+    totalOfertantes: number;
+    totalDemandantes: number;
     reunionesGeneradas: number;
     proximoEvento: Evento | null;
   };

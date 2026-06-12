@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatusChip } from "@/components/ui/status-chip";
 import { getEventoById, getPendingEventos, updateEventoStatus } from "@/features/eventos/api";
 import { AdminEventoEventos } from "@/features/eventos/components/admin-evento-eventos";
+import { EmpresaEventos } from "@/features/eventos/components/empresa-eventos";
 import { EventoCreateForm } from "@/features/eventos/components/evento-create-form";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -208,7 +209,9 @@ export function EventosWorkspace() {
         </>
       ) : null}
 
-      {role !== "adminSistema" && role !== "adminEvento" ? (
+      {role === "ofertante" || role === "demandante" ? <EmpresaEventos /> : null}
+
+      {role !== "adminSistema" && role !== "adminEvento" && role !== "ofertante" && role !== "demandante" ? (
         <EmptyState
           title="Catálogo de eventos en evolución"
           description="Próximamente verás aquí filtros avanzados, inscripción y seguimiento de estado por evento."

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/cn";
 import { getAdminEventos } from "@/features/eventos/api";
+import { EventoInscripcionesPanel } from "@/features/eventos/components/evento-inscripciones-panel";
 import { Evento } from "@/shared/types/domain";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -244,6 +245,11 @@ export function AdminEventoEventos({ onCreate }: AdminEventoEventosProps) {
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
                   <span>👥 {inscritos}/{evento.cupos}</span>
                   <span>🪑 {evento.mesas ?? 0} mesas</span>
+                  {evento.inscripcionesResumen ? (
+                    <span>
+                      {evento.inscripcionesResumen.ofertantes} ofertantes · {evento.inscripcionesResumen.demandantes} demandantes
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -378,6 +384,10 @@ export function AdminEventoEventos({ onCreate }: AdminEventoEventosProps) {
               <p className="mt-2 text-sm text-ink">
                 {selectedEvento.emailContacto || "Sin email"} {selectedEvento.telefonoContacto ? `• ${selectedEvento.telefonoContacto}` : ""}
               </p>
+            </div>
+
+            <div className="mt-6 border-t border-slate-200 pt-6">
+              <EventoInscripcionesPanel eventoId={selectedEvento._id} />
             </div>
 
             <div className="mt-6 flex justify-end">

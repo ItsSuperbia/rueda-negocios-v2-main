@@ -7,7 +7,13 @@ const {
     getEventoById,
     cambiarEstadoEvento,
     getAdminEventoDashboard,
-    getAdminEventos
+    getAdminEventos,
+    getEventosCatalogoEmpresa,
+    getMisEventosInscritos,
+    getEventoInscripciones,
+    getEmpresaEventosResumen,
+    inscribirseEvento,
+    cancelarInscripcionEvento
 } = require("../controllers/eventoController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -40,8 +46,20 @@ router.get("/admin/dashboard", protect, (req, res, next) => {
     next();
 }, getAdminEventoDashboard);
 
-// Obtener un evento por ID (adminSistema)
-router.get("/:id", protect, adminOnly, getEventoById);
+// Catalogo y eventos inscritos para empresas
+router.get("/catalogo", protect, getEventosCatalogoEmpresa);
+router.get("/mis-inscripciones", protect, getMisEventosInscritos);
+router.get("/empresa/resumen", protect, getEmpresaEventosResumen);
+
+// Inscripcion de empresas
+router.post("/:id/inscripcion", protect, inscribirseEvento);
+router.delete("/:id/inscripcion", protect, cancelarInscripcionEvento);
+
+// Listado de inscripciones por evento
+router.get("/:id/inscripciones", protect, getEventoInscripciones);
+
+// Obtener un evento por ID segun rol
+router.get("/:id", protect, getEventoById);
 
 // Cambiar estado evento (adminSistema)
 router.put("/:id/estado", protect, adminOnly, cambiarEstadoEvento);
