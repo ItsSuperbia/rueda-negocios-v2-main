@@ -1,13 +1,25 @@
+const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+
+const sanitizeFilename = (name) => {
+    const ext = path.extname(name).toLowerCase();
+    const base = path.basename(name, ext);
+    const safeBase = base.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").slice(0, 60) || "file";
+    return `${Date.now()}-${safeBase}${ext}`;
+};
 
 // Configuración del almacenamiento
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../uploads')); // carpeta donde se guardan archivos
+        const uploadDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir); // carpeta donde se guardan archivos
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
+        cb(null, sanitizeFilename(file.originalname));
     },
 });
 
@@ -21,4 +33,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Exportar el middleware
-module.exports = multer({ storage, fileFilter });
+module.exports = multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 }
+});

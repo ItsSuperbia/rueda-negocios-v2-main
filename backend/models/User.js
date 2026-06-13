@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
         },
 
         // 🏢 Datos principales de la empresa
-        nombreEmpresa: { type: String, required: function(){return this.role !== 'adminSistema'}},
+        nombreEmpresa: { type: String, required: function(){return this.role !== 'adminSistema' && this.role !== 'adminEvento'}},
         logoEmpresa: { type: String, default: "" }, // ruta de imagen
         sector: { type: String, required: function(){return this.role !== 'adminSistema'} },
         formalizada: { type: Boolean, required: function(){return this.role !== 'adminSistema'} },

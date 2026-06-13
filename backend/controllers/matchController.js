@@ -1,6 +1,8 @@
 const Match = require("../models/Match");
 const User = require("../models/User");
 
+const isAdminRole = (role) => role === "adminSistema" || role === "adminEvento";
+
 // 🔍 Generar posibles matches (Lógica simple por sector)
 exports.generateMatches = async (req, res) => {
     try {
@@ -33,7 +35,13 @@ exports.generateMatches = async (req, res) => {
             }
         }
 
-        res.json({ message: `Se generaron ${matchesCreated} nuevos matches potenciales.` });
+        const totalMatches = await Match.countDocuments();
+
+        res.json({
+            message: `Se generaron ${matchesCreated} nuevos matches potenciales.`,
+            matchesCreated,
+            totalMatches
+        });
 
     } catch (error) {
         console.error("Error generando matches:", error);
@@ -75,8 +83,25 @@ exports.updateMatchStatus = async (req, res) => {
     try {
         const { matchId, status } = req.body; // status: 'accepted', 'rejected'
 
+        if (!matchId || !status) {
+            return res.status(400).json({ message: "matchId y status son obligatorios" });
+        }
+
+        const allowedStatuses = ["accepted", "rejected"];
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({ message: "Estado de match no válido" });
+        }
+
         const match = await Match.findById(matchId);
         if (!match) return res.status(404).json({ message: "Match no encontrado" });
+
+        const userId = req.user.id;
+        const isAdmin = isAdminRole(req.user.role);
+        const isParticipant = match.supplierId.toString() === userId || match.buyerId.toString() === userId;
+
+        if (!isAdmin && !isParticipant) {
+            return res.status(403).json({ message: "No tienes permiso para actualizar este match" });
+        }
 
         // Solo el demandante o admin debería poder aceptar (regla de negocio común, o ambos)
         // Por simplicidad, permitimos a ambos por ahora

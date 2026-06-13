@@ -14,20 +14,29 @@ exports.validateRegister = [
         .isIn(["adminSistema", "adminEvento", "ofertante", "demandante"])
         .withMessage("El rol no es válido"),
 
-    body("nombreEmpresa")
-        .notEmpty()
-        .withMessage("El nombre de la empresa es obligatorio"),
+    body("nombreEmpresa").custom((value, { req }) => {
+        const role = req.body.role;
+        if (role === "adminSistema" || role === "adminEvento") {
+            return true;
+        }
+        if (!value) {
+            throw new Error("El nombre de la empresa es obligatorio");
+        }
+        return true;
+    }),
 
     body("sector")
+        .if(body("role").not().equals("adminSistema"))
         .notEmpty()
         .withMessage("El sector es obligatorio"),
 
     body("formalizada")
+        .if(body("role").not().equals("adminSistema"))
         .isBoolean()
         .withMessage("El campo 'formalizada' debe ser verdadero o falso"),
 
     body("aceptaTerminos")
-        .equals("true")
+        .custom((value) => value === "true" || value === "on" || value === true)
         .withMessage("Debe aceptar los términos y condiciones"),
 
     (req, res, next) => {
@@ -98,6 +107,28 @@ exports.validateUpdateUser = [
         .withMessage("Los documentos formalizados deben tener formato de objeto"),
 
     // Capturar errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errores: errors.array() });
+        }
+        next();
+    },
+];
+
+exports.validateTableReservation = [
+    body("tableNumber")
+        .isInt({ min: 1 })
+        .withMessage("Selecciona una mesa válida"),
+
+    body("dayKeys")
+        .isArray({ min: 1 })
+        .withMessage("Selecciona al menos un día"),
+
+    body("dayKeys.*")
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage("Los días deben tener formato YYYY-MM-DD"),
+
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
