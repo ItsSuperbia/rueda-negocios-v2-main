@@ -149,9 +149,82 @@ export interface MatchEntity {
 
 export interface MeetingEntity {
   _id: string;
-  matchId: string;
+  matchId?: string;
+  evento?: string;
+  tableReservation?: string | null;
+  supplierId?: string;
+  buyerId?: string | null;
+  tableNumber?: number;
+  dayKey?: string;
   startTime: string;
   endTime: string;
   location: string;
-  status: "scheduled" | "completed" | "cancelled" | "no_show";
+  status: "available" | "reserved" | "completed" | "cancelled" | "scheduled" | "no_show";
+  supplier?: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa"> | null;
+  buyer?: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa"> | null;
+}
+
+export interface MeetingDay {
+  key: string;
+  label: string;
+}
+
+export interface MeetingSlot {
+  startTime: string;
+  endTime: string;
+  label: string;
+}
+
+export interface TableReservationEntity {
+  _id: string;
+  evento: string;
+  tableNumber: number;
+  dayKey: string;
+  status: "reserved" | "cancelled";
+  supplier: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa"> | null;
+}
+
+export interface SupplierMatrixCell {
+  tableNumber: number;
+  status: "available" | "reserved";
+  reservedByMe: boolean;
+  supplier: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa"> | null;
+  meeting: MeetingEntity | null;
+}
+
+export interface SupplierMatrixRow {
+  label: string;
+  startTime: string;
+  endTime: string;
+  tables: SupplierMatrixCell[];
+}
+
+export interface SupplierMatrixDay extends MeetingDay {
+  rows: SupplierMatrixRow[];
+}
+
+export interface SupplierMeetingWorkspace {
+  evento: Evento;
+  days: MeetingDay[];
+  tables: number[];
+  slotsPerDay: Record<string, MeetingSlot[]>;
+  reservations: TableReservationEntity[];
+  myReservations: TableReservationEntity[];
+  matrix: SupplierMatrixDay[];
+}
+
+export interface BuyerSupplierCard {
+  reservationId: string;
+  dayKey: string;
+  tableNumber: number;
+  supplier: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa">;
+  sessions: MeetingEntity[];
+  availableSessions: number;
+}
+
+export interface BuyerMeetingMarketplace {
+  evento: Evento;
+  days: MeetingDay[];
+  sectors: string[];
+  supplierCards: BuyerSupplierCard[];
 }

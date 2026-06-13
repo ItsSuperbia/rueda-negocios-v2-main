@@ -1,6 +1,14 @@
 const Meeting = require("../models/Meeting");
 const Match = require("../models/Match");
 const User = require("../models/User");
+const {
+    MeetingBusinessError,
+    getMyRegisteredEvents,
+    getSupplierWorkspace,
+    reserveSupplierTable,
+    getBuyerMarketplace,
+    reserveBuyerSession
+} = require("../services/meetingService");
 
 const isAdminRole = (role) => role === "adminSistema" || role === "adminEvento";
 
@@ -60,6 +68,84 @@ const sendNotification = async (supplierId, buyerId, meeting) => {
 };
 
 exports.sendNotification = sendNotification;
+
+const handleMeetingError = (error, res) => {
+    if (error instanceof MeetingBusinessError) {
+        return res.status(error.status).json({ message: error.message });
+    }
+
+    console.error("Error en módulo de reuniones:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+};
+
+exports.getRegisteredMeetingEvents = async (req, res) => {
+    try {
+        const eventos = await getMyRegisteredEvents(req.user);
+        res.json({ data: eventos });
+    } catch (error) {
+        handleMeetingError(error, res);
+    }
+};
+
+exports.getSupplierEventWorkspace = async (req, res) => {
+    try {
+        const workspace = await getSupplierWorkspace({
+            user: req.user,
+            eventoId: req.params.eventoId
+        });
+        res.json(workspace);
+    } catch (error) {
+        handleMeetingError(error, res);
+    }
+};
+
+exports.reserveTable = async (req, res) => {
+    try {
+        const reservations = await reserveSupplierTable({
+            user: req.user,
+            eventoId: req.params.eventoId,
+            tableNumber: Number(req.body.tableNumber),
+            dayKeys: req.body.dayKeys
+        });
+
+        res.status(201).json({
+            message: "Mesa reservada correctamente",
+            reservations
+        });
+    } catch (error) {
+        handleMeetingError(error, res);
+    }
+};
+
+exports.getBuyerEventMarketplace = async (req, res) => {
+    try {
+        const marketplace = await getBuyerMarketplace({
+            user: req.user,
+            eventoId: req.params.eventoId,
+            search: req.query.search ?? "",
+            sector: req.query.sector ?? "todos"
+        });
+        res.json(marketplace);
+    } catch (error) {
+        handleMeetingError(error, res);
+    }
+};
+
+exports.reserveSession = async (req, res) => {
+    try {
+        const meeting = await reserveBuyerSession({
+            user: req.user,
+            meetingId: req.params.meetingId
+        });
+
+        res.status(201).json({
+            message: "Sesión reservada correctamente",
+            meeting
+        });
+    } catch (error) {
+        handleMeetingError(error, res);
+    }
+};
 
 // 🗓️ Obtener agenda
 exports.getSchedule = async (req, res) => {

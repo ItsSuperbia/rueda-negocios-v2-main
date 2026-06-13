@@ -115,3 +115,25 @@ exports.validateUpdateUser = [
         next();
     },
 ];
+
+exports.validateTableReservation = [
+    body("tableNumber")
+        .isInt({ min: 1 })
+        .withMessage("Selecciona una mesa válida"),
+
+    body("dayKeys")
+        .isArray({ min: 1 })
+        .withMessage("Selecciona al menos un día"),
+
+    body("dayKeys.*")
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage("Los días deben tener formato YYYY-MM-DD"),
+
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errores: errors.array() });
+        }
+        next();
+    },
+];
