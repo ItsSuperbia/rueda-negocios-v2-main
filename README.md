@@ -1,209 +1,244 @@
 # 🚀 Rueda de Negocios - Guía de Instalación y Ejecución
 
-Esta guía te ayudará a configurar y ejecutar la aplicación de Rueda de Negocios en tu máquina local.
+Esta guía te ayudará a configurar y ejecutar la aplicación de Rueda de Negocios utilizando Docker.
 
 ## 📋 Requisitos Previos
 
-Antes de comenzar, asegúrate de tener instalado lo siguiente:
+Antes de comenzar, asegúrate de tener instalado:
 
-1. **Node.js** (versión 16 o superior)
-   - Descargar desde: https://nodejs.org/
-   - Verificar instalación: `node --version`
+### 1. Git
 
-2. **Git** (para clonar el repositorio)
-   - Descargar desde: https://git-scm.com/
+Descargar desde:
 
-**Nota**: ✅ **Necesitas instalar MongoDB para ejecución local**. 
+https://git-scm.com/
+
+Verificar instalación:
+
+```bash
+git --version
+```
+
+### 2. Docker
+
+Descargar desde:
+
+https://www.docker.com/products/docker-desktop/
+
+Verificar instalación:
+
+```bash
+docker --version
+docker compose version
+```
+
+---
 
 ## 📥 Paso 1: Clonar el Repositorio
 
 ```bash
 git clone https://github.com/faibe1118/rueda-negocios-v2.git
+
 cd rueda-negocios-v2
 ```
 
-## 🔧 Paso 2: Configurar el Backend
+---
 
-### 2.1 Navegar a la carpeta backend
-```bash
-cd backend
-```
+## ⚙️ Paso 2: Configurar Variables de Entorno
 
-### 2.2 Instalar dependencias
-```bash
-npm install
-```
+### Backend
 
-### 2.3.0 Verificar DB Engine 
-Asegurate de que el servicio de mongoDB este activo
-```
-sudo systemctl status mongod
-```
-Si aparece **Disable** ejecuta
-```
-sudo systemctl start mongod
+Crear el archivo:
+
+```text
+backend/.env
 ```
 
-### 2.3.1 Crear archivo de configuración `.env`
-
-Crea un archivo llamado `.env` en la carpeta `backend` con el siguiente contenido:
+con el siguiente contenido:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/rueda-negocios #Uri de la base de datos 
-PORT=4000 #puerto donde quieres que corra el backend 
-JWT_SECRET=my_jwt_secret_key #jwt key para autenticación
+MONGO_URI=mongodb://mongodb:27017/rueda-negocios
+PORT=4000
+JWT_SECRET=my_jwt_secret_key
 ```
 
-**Importante**: 
-- ⚠️ Este archivo `.env` **NO se debe subir a GitHub** (ya está en `.gitignore`)
-- ✅ Todos los miembros del equipo deben usar la misma configuración
+### Frontend
 
-### 2.4 Crear usuario administrador
+Crear el archivo:
 
-Ejecuta el siguiente comando para crear un usuario admin de prueba:
+```text
+frontend-next/.env.local
+```
+
+con el siguiente contenido:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+---
+
+## 🐳 Paso 3: Levantar los Contenedores
+
+Desde la raíz del proyecto ejecutar:
 
 ```bash
-node createAdmin.js
+docker compose up -d --build
 ```
 
-Deberías ver un mensaje como:
-```
-✅ MongoDB conectado
-✅ Admin creado exitosamente:
-   Email: admin@ruedanegocios.com
-   Password: admin123
-```
-
-**Credenciales del Admin:**
-- Email: `admin@ruedanegocios.com`
-- Password: `admin123`
-
-## ▶️ Paso 3: Ejecutar el Backend
-
-Desde la carpeta `backend`, ejecuta:
+Verificar que los contenedores estén ejecutándose:
 
 ```bash
-npm start
+docker ps
 ```
 
 Deberías ver:
+
+```text
+rueda-negocios-mongodb
+rueda-negocios-backend
+rueda-negocios-frontend
 ```
-🔥 Servidor backend corriendo en http://localhost:4000
+
+---
+
+## 🗄️ Paso 4: Restaurar la Base de Datos
+
+El proyecto incluye un respaldo de la base de datos en la carpeta:
+
+```text
+backup/
 ```
 
-**¡No cierres esta terminal!** El servidor debe estar corriendo para que la aplicación funcione.
+Una vez que MongoDB esté ejecutándose:
 
+```bash
+mongorestore \
+  --host localhost \
+  --port 27018 \
+  --drop \
+  ./backup
+```
 
-## 🎯 Paso 5: Usar la Aplicación
+### Verificar restauración
 
-### 5.1 Iniciar sesión como Administrador
+Ingresar al contenedor de MongoDB:
 
-1. En la página de login, ingresa:
-   - **Email**: `admin@ruedanegocios.com`
-   - **Password**: `admin123`
+```bash
+docker compose exec mongodb mongosh
+```
 
-2. Haz clic en "Iniciar Sesión"
+Seleccionar la base de datos:
 
-3. Serás redirigido al **Panel de Administrador**
+```javascript
+use("rueda-negocios")
+```
 
-### 5.2 Generar Matches Automáticos (Admin)
+Mostrar colecciones:
 
-1. En el panel de administrador, haz clic en el botón:
-   ```
-   ⚡ Generar Matches Automáticos
-   ```
+```javascript
+show collections
+```
 
-2. Confirma la acción
+---
 
-3. El sistema emparejará automáticamente empresas ofertantes y demandantes del mismo sector
+## 🌐 Paso 5: Acceder a la Aplicación
 
-### 5.3 Gestionar Usuarios (Admin)
+### Frontend
 
-1. Haz clic en "👥 Gestión de Usuarios"
-2. Podrás ver, aprobar o rechazar usuarios registrados
+```text
+http://localhost:3000
+```
 
-### 5.4 Registrar una Empresa
+### Backend
 
-1. Cierra sesión del admin
-2. En la página de login, haz clic en "Registrarse"
-3. Completa el formulario con los datos de la empresa
-4. Selecciona el rol:
-   - **Ofertante**: Empresa que ofrece productos/servicios
-   - **Demandante**: Empresa que busca proveedores
+```text
+http://localhost:4000
+```
 
-### 5.5 Ver Matches (Usuario)
+---
 
-1. Inicia sesión como usuario (ofertante o demandante)
-2. Ve a "🤝 Mis Matches"
-3. Verás las empresas compatibles
-4. Puedes:
-   - ✅ Aceptar un match
-   - ❌ Rechazar un match
+## 🔑 Credenciales de Prueba
 
-### 5.6 Agendar Reunión
+Si la base de datos restaurada contiene el usuario administrador:
 
-1. Una vez que aceptes un match, aparecerá el botón "📅 Agendar Cita"
-2. Haz clic y completa:
-   - Fecha y hora de inicio
-   - Fecha y hora de fin
-   - Lugar/Mesa
-3. Confirma la cita
+```text
+Email: admin@ruedanegocios.com
+Password: admin123
+```
 
-### 5.7 Ver Agenda
+---
 
-1. Ve a "📅 Mi Agenda"
-2. Verás todas tus reuniones programadas con:
-   - Fecha y hora
-   - Empresa con la que te reunirás
-   - Lugar asignado
+## 🛠️ Comandos Útiles
 
-## 🛠️ Solución de Problemas
+### Ver logs del backend
 
-### Error: "Cannot connect to MongoDB"
+```bash
+docker compose logs -f backend
+```
 
-**Solución:**
-1. Verifica que tienes conexión a internet (MongoDB Atlas requiere conexión)
-2. Verifica que el archivo `.env` tenga la URL correcta de MongoDB Atlas
-3. Si el problema persiste, contacta al administrador del equipo que configuró MongoDB Atlas
+### Ver logs del frontend
 
-### Error: "MongoNetworkError" o "Connection timeout"
+```bash
+docker compose logs -f frontend
+```
 
-**Solución:**
-1. Verifica tu conexión a internet
-2. Puede ser un problema temporal de MongoDB Atlas, espera unos minutos e intenta de nuevo
-3. Verifica que no estés detrás de un firewall que bloquee la conexión
+### Ver logs de MongoDB
 
-### Error: "Port 4000 already in use"
+```bash
+docker compose logs -f mongodb
+```
 
-**Solución:**
-1. Cambia el puerto en el archivo `.env`:
-   ```env
-   PORT=5000
-   ```
+### Acceder al contenedor MongoDB
 
-2. Reinicia el servidor backend
+```bash
+docker compose exec mongodb mongosh
+```
 
-### Error: "Module not found"
+### Detener la aplicación
 
-**Solución:**
-1. Asegúrate de estar en la carpeta `backend`
-2. Ejecuta nuevamente:
-   ```bash
-   npm install
-   ```
+```bash
+docker compose down
+```
 
-### La página no carga o muestra errores de CORS
+### Eliminar contenedores y base de datos
 
-**Solución:**
-1. Verifica que el backend esté corriendo en `http://localhost:4000`
-2. Usa Live Server en lugar de abrir el archivo directamente
-3. Verifica que los archivos de servicio (`matchService.js`, `meetingService.js`) tengan la URL correcta del API
+⚠️ **Advertencia:** Este comando elimina también los datos almacenados en MongoDB.
 
+```bash
+docker compose down -v
+```
+
+---
+
+## 📌 Notas Importantes
+
+- No es necesario instalar MongoDB localmente.
+- MongoDB se ejecuta automáticamente dentro de Docker.
+- La base de datos debe restaurarse desde el backup incluido en el proyecto.
+- El backend se conecta a MongoDB mediante la red interna de Docker usando:
+
+```env
+MONGO_URI=mongodb://mongodb:27017/rueda-negocios
+```
+
+- El frontend consume la API mediante:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+- Si se modifica alguna variable de entorno, es recomendable reconstruir los contenedores:
+
+```bash
+docker compose down
+docker compose up -d --build
+``
 ## 📁 Estructura del Proyecto
 
 ```
 └── 📁rueda-negocios-v2-main
     └── 📁backend
+        └── Dockerfile # Construccioón del contenedor
         └── 📁config
             ├── database.js
         └── 📁controllers
@@ -242,6 +277,7 @@ Deberías ver:
         ├── createAdmin.js
         ├── server.js
     └── 📁frontend-next
+        └── Dockerfile # Construccioón del contenedor
         └── 📁app
             └── 📁(app)
                 └── 📁dashboard
@@ -363,6 +399,10 @@ Deberías ver:
             ├── auth-store.ts
         ├── .env.localn
     └── README.md
+    └── docker-compose.yaml # Construcción y despligue de contenedores
+    └── backup-db
+            ├── rueda-negocios # Populacion inicial de la base de datos
+
 
 ```
 
@@ -387,10 +427,5 @@ Si encuentras algún problema que no está cubierto en esta guía:
 
 Ahora tu equipo puede ejecutar la aplicación sin problemas. Recuerda:
 
-1. **Mantener** la terminal del backend abierta mientras uses la aplicación
-2. **No compartir** el archivo `.env` en el repositorio (ya está en `.gitignore`)
-3. **Tener MongoDB corriendo con la base de datos creada** para que la aplicación pueda conectarse a MongoDB Atlas
-
----
-
-**Desarrollado por el equipo de Rueda de Negocios v2**
+**Desarrollado por el equipo de Rueda de Negocios v2 - 2026**
+**Mención honorifica: ItsSuperbia**
