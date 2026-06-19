@@ -5,10 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 
 const restrictedByRole: Record<string, string[]> = {
-  adminSistema: ["/usuarios", "/eventos", "/dashboard", "/mensajes", "/reuniones", "/matches", "/notificaciones"],
-   adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil", "/matches", "/notificaciones"],
-  ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil", "/notificaciones"],
-  demandante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil", "/notificaciones"]
+  adminSistema: ["/usuarios", "/eventos", "/dashboard", "/mensajes", "/reuniones", "/matches"],
+   adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil", "/matches"],
+  ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil", "/matches"],
+  demandante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil",  "/matches"]
 };
 
 export function ProtectedLayout({ children }: { children: ReactNode }) {
