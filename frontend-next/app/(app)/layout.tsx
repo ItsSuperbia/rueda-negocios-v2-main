@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedLayout } from "@/components/layout/protected-layout";
+import { NavbarNotificationBell } from "./navbar-notification-bell";
 
 export default function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function MainAppLayout({ children }: { children: React.ReactNode 
                 priority
               />
             </Link>
+            <NavbarNotificationBell />
           </div>
         </nav>
       </div>

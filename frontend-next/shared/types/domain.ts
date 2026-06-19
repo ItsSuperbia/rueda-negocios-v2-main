@@ -240,3 +240,49 @@ export interface BuyerMeetingMarketplace {
   sectors: string[];
   supplierCards: BuyerSupplierCard[];
 }
+
+export type NotificationType =
+  | "meeting_created"
+  | "meeting_reminder"
+  | "meeting_cancelled"
+  | "meeting_rescheduled"
+  | "match_created";
+
+export type NotificationRelatedEntityType = "Meeting" | "Match" | "Evento";
+
+export interface NotificationEntity {
+  _id: string;
+  recipientUser: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedEntityType?: NotificationRelatedEntityType;
+  relatedEntityId?: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationsResponse {
+  data: NotificationEntity[];
+  meta: PaginationMeta;
+}
+
+export interface UnreadCountResponse {
+  unreadCount: number;
+}
+
+export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
+  meeting_created: "Reuniones",
+  meeting_reminder: "Recordatorios",
+  meeting_cancelled: "Cancelaciones",
+  meeting_rescheduled: "Reprogramaciones",
+  match_created: "Matches",
+};
+
+export const NOTIFICATION_TYPE_GROUP_FILTERS = [
+  { key: "all", label: "Todas" },
+  { key: "unread", label: "No leídas" },
+  { key: "meeting", label: "Reuniones" },
+  { key: "match", label: "Matches" },
+] as const;

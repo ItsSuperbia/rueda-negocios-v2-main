@@ -3,6 +3,7 @@ const EventoInscripcion = require("../models/EventoInscripcion");
 const Match = require("../models/Match");
 const Meeting = require("../models/Meeting");
 const TableReservation = require("../models/TableReservation");
+const { notificationBus } = require("./notificationService");
 
 class MeetingBusinessError extends Error {
     constructor(message, status = 400) {
@@ -562,6 +563,12 @@ const reserveBuyerSession = async ({ user, meetingId }) => {
         throw new MeetingBusinessError("La sesión ya fue reservada por otra empresa", 409);
     }
 
+    notificationBus.emit("meeting:created", {
+        meeting: reserved,
+        supplierId: reserved.supplierId?._id ?? reserved.supplierId,
+        buyerId: reserved.buyerId?._id ?? reserved.buyerId,
+    });
+
     return normalizeMeeting(reserved);
 };
 
@@ -595,7 +602,11 @@ const cancelBuyerSession = async ({ user, meetingId }) => {
     meeting.feedback = "";
     await meeting.save();
 
-    // TODO: Enviar notificación al ofertante cuando se implemente el módulo de notificaciones
+    notificationBus.emit("meeting:cancelled", {
+        meeting: cancelledMeeting,
+        supplierId: cancelledMeeting.supplier?._id ?? cancelledMeeting.supplierId,
+        buyerId: cancelledMeeting.buyer?._id ?? cancelledMeeting.buyerId,
+    });
 
     return {
         cancelledMeeting,
@@ -642,7 +653,22 @@ const cancelSupplierResourcesForEvent = async ({ eventoId, userId }) => {
         )
     ]);
 
-    // TODO: Notificar a demandantes afectados cuando exista módulo de notificaciones
+    const affectedMeetings = await Meeting.find({
+        evento: eventoId,
+        supplierId: userId,
+        status: "available",
+        buyerId: { $exists: false },
+    }).lean();
+
+    for (const meeting of affectedMeetings) {
+        if (meeting.buyerId) {
+            notificationBus.emit("meeting:cancelled", {
+                meeting,
+                supplierId: meeting.supplierId,
+                buyerId: meeting.buyerId,
+            });
+        }
+    }
 
     return {
         reservationsReleased: reservationResult.modifiedCount ?? 0,

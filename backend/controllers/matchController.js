@@ -1,5 +1,6 @@
 const Match = require("../models/Match");
 const User = require("../models/User");
+const { notificationBus } = require("../services/notificationService");
 
 const isAdminRole = (role) => role === "adminSistema" || role === "adminEvento";
 
@@ -23,13 +24,19 @@ exports.generateMatches = async (req, res) => {
                     });
 
                     if (!existingMatch) {
-                        await Match.create({
+                        const newMatch = await Match.create({
                             supplierId: supplier._id,
                             buyerId: buyer._id,
-                            score: 80, // Score base por coincidencia de sector
+                            score: 80,
                             status: "pending",
                         });
                         matchesCreated++;
+
+                        notificationBus.emit("match:created", {
+                            match: newMatch,
+                            supplierId: supplier._id,
+                            buyerId: buyer._id,
+                        });
                     }
                 }
             }

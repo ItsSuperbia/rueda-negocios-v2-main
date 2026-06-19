@@ -19,7 +19,8 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/eventos", label: "Eventos" },
     { href: "/mensajes", label: "Mensajería" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/matches", label: "Matches"}
+    { href: "/matches", label: "Matches"},
+    { href: "/notificaciones", label: "Notificaciones" }
 
   ],
   adminEvento: [
@@ -27,7 +28,8 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/eventos", label: "Eventos" },
     { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/matches", label: "Matches"}
+    { href: "/matches", label: "Matches"},
+    { href: "/notificaciones", label: "Notificaciones" }
 
   ],
   ofertante: [
@@ -35,14 +37,16 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/eventos", label: "Eventos" },
     { href: "/mensajes", label: "Mensajería" },
     { href: "/perfil", label: "Mi perfil" },
-    { href: "/reuniones", label: "Reuniones" }
+    { href: "/reuniones", label: "Reuniones" },
+    { href: "/notificaciones", label: "Notificaciones" }
   ],
   demandante: [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/eventos", label: "Eventos" },
     { href: "/mensajes", label: "Mensajería" },
     { href: "/perfil", label: "Mi perfil" },
-    { href: "/reuniones", label: "Reuniones" }
+    { href: "/reuniones", label: "Reuniones" },
+    { href: "/notificaciones", label: "Notificaciones" }
   ]
 };
 
