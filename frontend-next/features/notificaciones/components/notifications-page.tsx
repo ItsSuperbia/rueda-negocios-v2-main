@@ -132,7 +132,6 @@ export function NotificationsPage() {
         <h1 className="font-[var(--font-heading)] text-2xl font-bold text-ink">Notificaciones</h1>
         <Button
           variant="secondary"
-          size="sm"
           onClick={() => markAllRead.mutate(token ?? "")}
           loading={markAllRead.isPending}
         >
@@ -185,7 +184,6 @@ export function NotificationsPage() {
         <div className="flex items-center justify-center gap-3 pt-2">
           <Button
             variant="secondary"
-            size="sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
@@ -196,7 +194,6 @@ export function NotificationsPage() {
           </span>
           <Button
             variant="secondary"
-            size="sm"
             disabled={page >= meta.totalPages}
             onClick={() => setPage((p) => p + 1)}
           >

@@ -6,12 +6,14 @@ export interface Match {
   supplierId: {
     _id: string;
     nombreEmpresa: string;
+    logoEmpresa?: string;
     sector: string;
   };
 
   buyerId: {
     _id: string;
     nombreEmpresa: string;
+    logoEmpresa?: string;
     sector: string;
   };
 

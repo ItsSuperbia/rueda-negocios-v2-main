@@ -3,6 +3,8 @@ backend/node_modules/
 backend/uploads/
 backend/.env
 backend/package-lock.json
+backend/RESUMEN_MEJORAS_BACKEND.md
+backend/ANALISIS_BACKEND.md
 
 # Logs
 backend/npm-debug.log*

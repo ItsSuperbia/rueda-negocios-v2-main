@@ -46,7 +46,8 @@ export function MatchesWorkspace() {
 
   const {
     data: matches = [],
-    isLoading
+    isLoading,
+    isError
   } = useQuery({
     queryKey: ["matches"],
     queryFn: () =>
@@ -54,6 +55,15 @@ export function MatchesWorkspace() {
 
     enabled: !!token
   });
+
+  if (isError) {
+    return (
+      <div className="rounded-xl border border-danger/30 bg-danger/5 p-8 text-center">
+        <h2 className="text-lg font-semibold text-danger">Error al cargar matches</h2>
+        <p className="mt-2 text-sm text-muted">Verifica que el backend esté activo y que tu sesión siga vigente.</p>
+      </div>
+    );
+  }
 
   const updateMutation = useMutation({
     mutationFn: updateMatchStatus,

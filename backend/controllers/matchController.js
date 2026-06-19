@@ -75,8 +75,8 @@ exports.getMyMatches = async (req, res) => {
         }
 
         const matches = await Match.find(query)
-            .populate("supplierId", "nombreEmpresa sector")
-            .populate("buyerId", "nombreEmpresa sector");
+            .populate("supplierId", "nombreEmpresa logoEmpresa sector")
+            .populate("buyerId", "nombreEmpresa logoEmpresa sector");
 
         res.json(matches);
 

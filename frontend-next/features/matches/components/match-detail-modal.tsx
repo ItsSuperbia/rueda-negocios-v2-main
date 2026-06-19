@@ -4,6 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Match } from "../schema";
 import { cn } from "@/lib/cn";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://gisistinfo.unicartagena.edu.co:3003";
+
+const resolveFileUrl = (path?: string) => {
+  if (!path) return "";
+  const normalized = path.replace(/\\/g, "/");
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) return normalized;
+  const uploadsIndex = normalized.lastIndexOf("/uploads/");
+  if (uploadsIndex >= 0) return `${API_BASE_URL}${normalized.slice(uploadsIndex)}`;
+  if (normalized.startsWith("/uploads/")) return `${API_BASE_URL}${normalized}`;
+  if (normalized.startsWith("uploads/")) return `${API_BASE_URL}/${normalized}`;
+  return normalized;
+};
+
+function CompanyLogo({ logo, nombre, fallbackIcon }: { logo?: string; nombre: string; fallbackIcon: string }) {
+  const resolvedLogo = resolveFileUrl(logo);
+  return resolvedLogo ? (
+    <img src={resolvedLogo} alt={nombre} className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-slate-200" />
+  ) : (
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-xl ring-1 ring-accent/20">{fallbackIcon}</span>
+  );
+}
+
 interface MatchDetailModalProps {
   match: Match | null;
   open: boolean;
@@ -97,17 +119,20 @@ export function MatchDetailModal({
               OFERTANTE
             </p>
 
-            <h3 className="mt-2 text-lg font-semibold">
-              🏭 {match.supplierId.nombreEmpresa}
-            </h3>
-
-            <p className="mt-1 text-sm text-muted">
-              Sector:
-            </p>
-
-            <p className="font-medium">
-              {match.supplierId.sector}
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <CompanyLogo logo={match.supplierId.logoEmpresa} nombre={match.supplierId.nombreEmpresa} fallbackIcon="🏭" />
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {match.supplierId.nombreEmpresa}
+                </h3>
+                <p className="mt-1 text-sm text-muted">
+                  Sector:
+                </p>
+                <p className="font-medium">
+                  {match.supplierId.sector}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Demandante */}
@@ -117,17 +142,20 @@ export function MatchDetailModal({
               DEMANDANTE
             </p>
 
-            <h3 className="mt-2 text-lg font-semibold">
-              🛒 {match.buyerId.nombreEmpresa}
-            </h3>
-
-            <p className="mt-1 text-sm text-muted">
-              Sector:
-            </p>
-
-            <p className="font-medium">
-              {match.buyerId.sector}
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <CompanyLogo logo={match.buyerId.logoEmpresa} nombre={match.buyerId.nombreEmpresa} fallbackIcon="🛒" />
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {match.buyerId.nombreEmpresa}
+                </h3>
+                <p className="mt-1 text-sm text-muted">
+                  Sector:
+                </p>
+                <p className="font-medium">
+                  {match.buyerId.sector}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -19,8 +19,7 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/eventos", label: "Eventos" },
     { href: "/mensajes", label: "Mensajería" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/matches", label: "Matches"},
-    { href: "/notificaciones", label: "Notificaciones" }
+    { href: "/matches", label: "Matches"}
 
   ],
   adminEvento: [
@@ -37,7 +36,7 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/mensajes", label: "Mensajería" },
     { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/notificaciones", label: "Notificaciones" }
+    { href: "/matches", label: "Matches" }
   ],
   demandante: [
     { href: "/dashboard", label: "Dashboard" },
@@ -45,7 +44,7 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/mensajes", label: "Mensajería" },
     { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/notificaciones", label: "Notificaciones" }
+    { href: "/matches", label: "Matches" }
   ]
 };
 

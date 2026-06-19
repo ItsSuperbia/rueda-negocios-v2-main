@@ -13,7 +13,7 @@ Antes de comenzar, asegúrate de tener instalado lo siguiente:
 2. **Git** (para clonar el repositorio)
    - Descargar desde: https://git-scm.com/
 
-**Nota**: ✅ **NO necesitas instalar MongoDB localmente**. El proyecto usa **MongoDB Atlas** (base de datos en la nube) que ya está configurado por el equipo.
+**Nota**: ✅ **Necesitas instalar MongoDB para ejecución local**. 
 
 ## 📥 Paso 1: Clonar el Repositorio
 
@@ -34,20 +34,29 @@ cd backend
 npm install
 ```
 
-### 2.3 Crear archivo de configuración `.env`
+### 2.3.0 Verificar DB Engine 
+Asegurate de que el servicio de mongoDB este activo
+```
+sudo systemctl status mongod
+```
+Si aparece **Disable** ejecuta
+```
+sudo systemctl start mongod
+```
+
+### 2.3.1 Crear archivo de configuración `.env`
 
 Crea un archivo llamado `.env` en la carpeta `backend` con el siguiente contenido:
 
 ```env
-MONGO_URI=mongodb+srv://fsdg1118:fKSRZAAsYZJramgj@clusterbd.d5ixwbt.mongodb.net/?retryWrites=true&w=majority&appName=ClusterBD
-PORT=4000
-JWT_SECRET=my_jwt_secret_key
+MONGO_URI=mongodb://localhost:27017/rueda-negocios #Uri de la base de datos 
+PORT=4000 #puerto donde quieres que corra el backend 
+JWT_SECRET=my_jwt_secret_key #jwt key para autenticación
 ```
 
 **Importante**: 
 - ⚠️ Este archivo `.env` **NO se debe subir a GitHub** (ya está en `.gitignore`)
 - ✅ Todos los miembros del equipo deben usar la misma configuración
-- ✅ La base de datos está en la nube (MongoDB Atlas), por lo que no necesitas instalar nada adicional
 
 ### 2.4 Crear usuario administrador
 
@@ -84,35 +93,6 @@ Deberías ver:
 
 **¡No cierres esta terminal!** El servidor debe estar corriendo para que la aplicación funcione.
 
-## 🌐 Paso 4: Abrir el Frontend
-
-### 4.1 Abrir en el navegador
-
-Abre tu navegador web (Chrome, Firefox, Edge, etc.) y navega a:
-
-```
-file:///RUTA_COMPLETA/rueda-negocios-v2/frontend/pages/login.html
-```
-
-**Ejemplo en Windows:**
-```
-file:///E:/repositorios/rueda-negocios-v2/rueda-negocios-v2/frontend/pages/login.html
-```
-
-**Ejemplo en Linux/Mac:**
-```
-file:///home/usuario/rueda-negocios-v2/frontend/pages/login.html
-```
-
-### 4.2 Alternativa: Usar Live Server (Recomendado)
-
-Si usas **Visual Studio Code**:
-
-1. Instala la extensión "Live Server"
-2. Haz clic derecho en `frontend/pages/login.html`
-3. Selecciona "Open with Live Server"
-
-Esto abrirá automáticamente la página en `http://127.0.0.1:5500/frontend/pages/login.html`
 
 ## 🎯 Paso 5: Usar la Aplicación
 
@@ -222,27 +202,167 @@ Esto abrirá automáticamente la página en `http://127.0.0.1:5500/frontend/page
 ## 📁 Estructura del Proyecto
 
 ```
-rueda-negocios-v2/
-├── backend/
-│   ├── config/          # Configuración de base de datos
-│   ├── controllers/     # Lógica de negocio
-│   ├── models/          # Modelos de MongoDB
-│   ├── routes/          # Rutas de la API
-│   ├── middleware/      # Middlewares (auth, validación)
-│   ├── .env            # Variables de entorno (NO SUBIR A GIT)
-│   ├── server.js       # Punto de entrada del servidor
-│   └── createAdmin.js  # Script para crear admin
-│
-└── frontend/
-    ├── pages/          # Páginas HTML
-    │   ├── login.html
-    │   ├── register.html
-    │   ├── matches.html
-    │   ├── agenda.html
-    │   └── ...
-    └── js/
-        ├── services/   # Servicios para consumir API
-        └── modules/    # Módulos JS
+└── 📁rueda-negocios-v2-main
+    └── 📁backend
+        └── 📁config
+            ├── database.js
+        └── 📁controllers
+            ├── eventoController.js
+            ├── matchController.js
+            ├── meetingController.js
+            ├── notificationController.js
+            ├── userController.js
+        └── 📁middleware
+            ├── adminMiddleware.js
+            ├── authMiddleware.js
+            ├── upload.js
+            ├── validator.js
+        └── 📁models
+            ├── Evento.js
+            ├── EventoInscripcion.js
+            ├── Match.js
+            ├── Meeting.js
+            ├── Notification.js
+            ├── TableReservation.js
+            ├── User.js
+        └── 📁routes
+            ├── eventoRoutes.js
+            ├── index.js
+            ├── matchRoutes.js
+            ├── meetingRoutes.js
+            ├── notificationRoutes.js
+            ├── uploadRoutes.js
+            ├── userRoutes.js
+        └── 📁services
+            ├── meetingService.js
+            ├── notificationService.js
+            ├── reminderJob.js
+        └── 📁uploads
+        ├── .env
+        ├── createAdmin.js
+        ├── server.js
+    └── 📁frontend-next
+        └── 📁app
+            └── 📁(app)
+                └── 📁dashboard
+                    ├── page.tsx
+                └── 📁eventos
+                    ├── page.tsx
+                └── 📁matches
+                    ├── page.tsx
+                └── 📁mensajes
+                    ├── page.tsx
+                └── 📁notificaciones
+                    ├── page.tsx
+                └── 📁perfil
+                    ├── page.tsx
+                └── 📁reuniones
+                    ├── page.tsx
+                └── 📁usuarios
+                    ├── page.tsx
+                ├── layout.tsx
+                ├── navbar-notification-bell.tsx
+            └── 📁(auth)
+                └── 📁login
+                    ├── page.tsx
+                └── 📁proteccion-datos
+                    ├── page.tsx
+                └── 📁register
+                    ├── page.tsx
+            ├── globals.css
+            ├── layout.tsx
+            ├── page.tsx
+        └── 📁components
+            └── 📁layout
+                ├── app-shell.tsx
+                ├── protected-layout.tsx
+            └── 📁ui
+                ├── button.tsx
+                ├── card.tsx
+                ├── empty-state.tsx
+                ├── status-chip.tsx
+        └── 📁features
+            └── 📁auth
+                └── 📁components
+                    ├── data-policy-modal.tsx
+                    ├── login-form.tsx
+                    ├── register-form.tsx
+                ├── api.ts
+                ├── hooks.ts
+                ├── schema.ts
+            └── 📁dashboard
+                └── 📁components
+                    ├── role-dashboard.tsx
+                ├── api.ts
+            └── 📁eventos
+                └── 📁components
+                    ├── admin-evento-eventos.tsx
+                    ├── empresa-eventos.tsx
+                    ├── evento-create-form.tsx
+                    ├── evento-inscripciones-panel.tsx
+                    ├── eventos-workspace.tsx
+                ├── api.ts
+                ├── schema.ts
+            └── 📁matches
+                └── 📁components
+                    ├── admin-match-panel.tsx
+                    ├── empresa-match-panel.tsx
+                    ├── match-card.tsx
+                    ├── match-detail-modal.tsx
+                    ├── match-stats.tsx
+                    ├── matches-workspace.tsx
+                ├── api.ts
+                ├── schema.ts
+            └── 📁mensajes
+                └── 📁components
+            └── 📁notificaciones
+                └── 📁components
+                    ├── notification-bell.tsx
+                    ├── notifications-page.tsx
+                ├── api.ts
+                ├── hooks.ts
+            └── 📁perfil
+                └── 📁components
+                    ├── profile-workspace.tsx
+                ├── api.ts
+                ├── schema.ts
+            └── 📁reuniones
+                └── 📁components
+                    ├── reuniones-workspace.tsx
+                ├── api.ts
+            └── 📁usuarios
+                └── 📁components
+                    ├── user-management-board.tsx
+                ├── api.ts
+        └── 📁lib
+            ├── cn.ts
+            ├── providers.tsx
+        └── 📁public
+            └── 📁images
+                └── 📁branding
+                    ├── endless-constellation.svg
+                └── 📁hero
+                    ├── hero_main_img.jpg
+                    ├── hero_sec_img_left.jpg
+                    ├── hero_sec_img_right.jpg
+                    ├── hero_sec_main_right.jpg
+                    ├── hero_serv_deals_img.jpg
+                    ├── hero_serv_reunions_img.jpg
+                    ├── hero_serv_room_img.jpg
+                └── 📁icons
+                    ├── icon_favicon_EventConnect.jpg
+                    ├── icon_favicon_EventConnect.png
+                    ├── icon_navbar_logo_EventConnect.jpg
+                    ├── icon_navbar_logo_EventConnect.png
+        └── 📁shared
+            └── 📁api
+                ├── client.ts
+            └── 📁types
+                ├── domain.ts
+        └── 📁store
+            ├── auth-store.ts
+        ├── .env.localn
+    └── README.md
 
 ```
 
@@ -269,7 +389,7 @@ Ahora tu equipo puede ejecutar la aplicación sin problemas. Recuerda:
 
 1. **Mantener** la terminal del backend abierta mientras uses la aplicación
 2. **No compartir** el archivo `.env` en el repositorio (ya está en `.gitignore`)
-3. **Tener conexión a internet** para que la aplicación pueda conectarse a MongoDB Atlas
+3. **Tener MongoDB corriendo con la base de datos creada** para que la aplicación pueda conectarse a MongoDB Atlas
 
 ---
 

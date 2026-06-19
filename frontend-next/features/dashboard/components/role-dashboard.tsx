@@ -63,6 +63,19 @@ const formatMeetingTime = (value?: string) => {
   return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false });
 };
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://gisistinfo.unicartagena.edu.co:3003";
+
+const resolveFileUrl = (path?: string) => {
+  if (!path) return "";
+  const normalized = path.replace(/\\/g, "/");
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) return normalized;
+  const uploadsIndex = normalized.lastIndexOf("/uploads/");
+  if (uploadsIndex >= 0) return `${API_BASE_URL}${normalized.slice(uploadsIndex)}`;
+  if (normalized.startsWith("/uploads/")) return `${API_BASE_URL}${normalized}`;
+  if (normalized.startsWith("uploads/")) return `${API_BASE_URL}/${normalized}`;
+  return normalized;
+};
+
 const getInitials = (value?: string) => {
   if (!value) return "RN";
   return value
@@ -122,8 +135,8 @@ function UpcomingMeetingsSection({
         <div className="mt-4 grid gap-3">
           {upcoming.map((meeting) => {
             const company = getCompany(meeting);
-            const logo = company?.logoEmpresa;
-            const canRenderLogo = Boolean(logo && (logo.startsWith("http") || logo.startsWith("/")));
+            const logo = resolveFileUrl(company?.logoEmpresa);
+            const canRenderLogo = Boolean(logo);
 
             return (
               <div key={meeting._id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
