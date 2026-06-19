@@ -6,7 +6,7 @@ import { useAuthStore } from "@/store/auth-store";
 
 const restrictedByRole: Record<string, string[]> = {
   adminSistema: ["/usuarios", "/eventos", "/dashboard", "/mensajes", "/reuniones", "/matches", "/notificaciones"],
-   adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil", "/matches", "/notificaciones"],
+  adminEvento: ["/eventos", "/dashboard", "/mensajes", "/reuniones", "/perfil", "/notificaciones"],
   ofertante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil", "/notificaciones"],
   demandante: ["/dashboard", "/eventos", "/mensajes", "/reuniones", "/perfil", "/notificaciones"]
 };
