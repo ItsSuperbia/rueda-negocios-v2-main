@@ -32,8 +32,7 @@ export function MatchesWorkspace() {
   );
 
   const isAdmin =
-  role === "adminSistema" ||
-  role === "adminEvento";
+  role === "adminSistema";
 
 
   const queryClient = useQueryClient();
