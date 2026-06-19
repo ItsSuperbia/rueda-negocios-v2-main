@@ -33,7 +33,8 @@ const roleCopy: Record<string, { headline: string; summary: string; actions: { h
     actions: [
       { href: "/eventos", label: "Ver eventos" },
       { href: "/reuniones", label: "Ver agenda" },
-      { href: "/mensajes", label: "Abrir mensajería" }
+      { href: "/mensajes", label: "Abrir mensajería" },
+      { href: "/matches", label: "Ver matches" }
     ]
   },
   demandante: {
@@ -42,7 +43,8 @@ const roleCopy: Record<string, { headline: string; summary: string; actions: { h
     actions: [
       { href: "/eventos", label: "Ver eventos" },
       { href: "/reuniones", label: "Ver agenda" },
-      { href: "/mensajes", label: "Abrir mensajería" }
+      { href: "/mensajes", label: "Abrir mensajería" },
+      { href: "/matches", label: "Ver matches" }
     ]
   }
 };

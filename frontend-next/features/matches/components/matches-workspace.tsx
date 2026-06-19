@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { EmpresaMatchPanel } from "./empresa-match-panel";
+
 import {
   useMutation,
   useQuery,
@@ -24,6 +26,15 @@ export function MatchesWorkspace() {
   const token = useAuthStore(
     (state) => state.token
   );
+
+  const role = useAuthStore(
+  (state) => state.role
+  );
+
+  const isAdmin =
+  role === "adminSistema" ||
+  role === "adminEvento";
+
 
   const queryClient = useQueryClient();
 
@@ -85,13 +96,23 @@ export function MatchesWorkspace() {
 
   return (
     <>
-      <AdminMatchPanel
-        matches={matches}
-        loading={isLoading}
-        onViewMatch={handleViewMatch}
-        onAcceptMatch={handleAccept}
-        onRejectMatch={handleReject}
-      />
+      {isAdmin ? (
+        <AdminMatchPanel
+          matches={matches}
+          loading={isLoading}
+          onViewMatch={handleViewMatch}
+          onAcceptMatch={handleAccept}
+          onRejectMatch={handleReject}
+        />
+      ) : (
+        <EmpresaMatchPanel
+          matches={matches}
+          loading={isLoading}
+          onViewMatch={handleViewMatch}
+          onAcceptMatch={handleAccept}
+          onRejectMatch={handleReject}
+        />
+      )}
 
       <MatchDetailModal
         open={modalOpen}
