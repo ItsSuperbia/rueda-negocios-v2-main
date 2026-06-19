@@ -107,6 +107,7 @@ interface AdminEventoEventosProps {
 
 export function AdminEventoEventos({ onCreate }: AdminEventoEventosProps) {
   const token = useAuthStore((state) => state.token);
+  const role = useAuthStore((state) => state.role);
   const [estadoFiltro, setEstadoFiltro] = useState("todos");
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
@@ -131,7 +132,7 @@ export function AdminEventoEventos({ onCreate }: AdminEventoEventosProps) {
   }, []);
 
   const eventosQuery = useQuery({
-    queryKey: ["eventos", "adminEvento", { page, pageSize, estadoFiltro, debouncedSearch }],
+    queryKey: ["eventos", "adminEvento", role, { page, pageSize, estadoFiltro, debouncedSearch }],
     queryFn: () =>
       getAdminEventos(token as string, {
         page,
@@ -162,20 +163,25 @@ export function AdminEventoEventos({ onCreate }: AdminEventoEventosProps) {
     return `Mostrando ${start}-${end} de ${total} eventos`;
   }, [page, pageSize, total]);
 
-  const emptyTitle = debouncedSearch || estadoFiltro !== "todos" ? "No se encontraron eventos" : "Aún no has creado eventos";
+  const isAdminSistema = role === "adminSistema";
+  const emptyTitle = debouncedSearch || estadoFiltro !== "todos" ? "No se encontraron eventos" : isAdminSistema ? "No hay eventos registrados" : "Aún no has creado eventos";
   const emptyDescription =
     debouncedSearch || estadoFiltro !== "todos"
       ? "Prueba con otra búsqueda o cambia el filtro de estado."
-      : "Cuando crees tu primer evento aparecerá aquí para su seguimiento.";
+      : isAdminSistema
+        ? "Cuando existan eventos aparecerán aquí para su gestión."
+        : "Cuando crees tu primer evento aparecerá aquí para su seguimiento.";
 
   return (
     <Card className="fade-up">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">📋 Mis Eventos</h2>
-          <p className="mt-1 text-sm text-muted">Gestiona todos los eventos que has creado.</p>
+          <h2 className="text-xl font-semibold">{isAdminSistema ? "📋 Todos los eventos" : "📋 Mis Eventos"}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {isAdminSistema ? "Gestiona cualquier evento existente y sus participantes." : "Gestiona todos los eventos que has creado."}
+          </p>
         </div>
-        <Button onClick={onCreate}>➕ Crear evento</Button>
+        {isAdminSistema ? null : <Button onClick={onCreate}>➕ Crear evento</Button>}
       </div>
 
       <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">

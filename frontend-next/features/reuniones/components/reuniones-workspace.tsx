@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/cn";
 import {
+  cancelBuyerSession,
   getBuyerMeetingMarketplace,
   getMeetingEventos,
+  getSupplierPublicProfile,
   getSupplierMeetingWorkspace,
   reserveBuyerSession,
   reserveSupplierTable
@@ -20,6 +23,8 @@ import {
   SupplierMeetingWorkspace,
   TableReservationEntity
 } from "@/shared/types/domain";
+import type { CatalogoPDF } from "@/shared/types/domain";
+import { downloadCatalogo } from "@/features/perfil/api";
 import { useAuthStore } from "@/store/auth-store";
 
 const formatShortDate = (value?: string) => {
@@ -71,6 +76,242 @@ const getDayLabel = (dayKey: string) => {
 
 const getFeedbackClass = (type: "success" | "error") =>
   type === "success" ? "bg-success/10 text-success ring-success/30" : "bg-danger/10 text-danger ring-danger/30";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://gisistinfo.unicartagena.edu.co:3003";
+
+const resolveFileUrl = (path?: string) => {
+  if (!path) return "";
+  const normalized = path.replace(/\\/g, "/");
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) return normalized;
+  const uploadsIndex = normalized.lastIndexOf("/uploads/");
+  if (uploadsIndex >= 0) return `${API_BASE_URL}${normalized.slice(uploadsIndex)}`;
+  if (normalized.startsWith("/uploads/")) return `${API_BASE_URL}${normalized}`;
+  if (normalized.startsWith("uploads/")) return `${API_BASE_URL}/${normalized}`;
+  return normalized;
+};
+
+const getCatalogoMeta = (catalogo?: string | CatalogoPDF | null): CatalogoPDF | null => {
+  if (!catalogo) return null;
+  if (typeof catalogo === "string") {
+    return catalogo
+      ? {
+          nombreArchivo: catalogo.split(/[\\/]/).pop() ?? "catalogo.pdf",
+          url: catalogo,
+          fechaCarga: null
+        }
+      : null;
+  }
+  return catalogo;
+};
+
+const canCancelMeeting = (meeting: MeetingEntity) => {
+  const start = new Date(meeting.startTime);
+  return !Number.isNaN(start.getTime()) && start.getTime() - Date.now() >= 24 * 60 * 60 * 1000;
+};
+
+function ModalShell({
+  title,
+  children,
+  onClose
+}: {
+  title: string;
+  children: ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold text-ink">{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function MeetingLogo({ logo, name }: { logo?: string; name?: string }) {
+  const logoUrl = resolveFileUrl(logo);
+
+  return (
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent/10 text-sm font-bold text-accent ring-1 ring-accent/20">
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="h-full w-full object-cover" src={logoUrl} alt={name ?? "Logo empresa"} />
+      ) : (
+        getInitials(name)
+      )}
+    </div>
+  );
+}
+
+function MeetingDetails({
+  meeting,
+  companyRole = "supplier",
+  showStatus = true
+}: {
+  meeting: MeetingEntity;
+  companyRole?: "supplier" | "buyer";
+  showStatus?: boolean;
+}) {
+  const company = companyRole === "supplier" ? meeting.supplier : meeting.buyer;
+
+  return (
+    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center gap-3">
+        <MeetingLogo logo={company?.logoEmpresa} name={company?.nombreEmpresa} />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-muted">Empresa</p>
+          <p className="truncate text-sm font-semibold text-ink">{company?.nombreEmpresa ?? "Empresa por confirmar"}</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div>
+          <p className="text-xs font-semibold text-muted">Mesa</p>
+          <p className="text-sm font-semibold text-ink">Mesa {meeting.tableNumber ?? "--"}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-muted">Fecha</p>
+          <p className="text-sm font-semibold text-ink">{formatShortDate(meeting.startTime)}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-muted">Hora</p>
+          <p className="text-sm font-semibold text-ink">
+            {formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}
+          </p>
+        </div>
+        {showStatus ? (
+          <div>
+            <p className="text-xs font-semibold text-muted">Estado</p>
+            <p className="text-sm font-semibold text-success">Confirmada</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SupplierProfileDrawer({
+  token,
+  eventoId,
+  supplierId,
+  onClose
+}: {
+  token: string;
+  eventoId: string;
+  supplierId: string;
+  onClose: () => void;
+}) {
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const profileQuery = useQuery({
+    queryKey: ["meetings", "supplier-profile", eventoId, supplierId],
+    queryFn: () => getSupplierPublicProfile({ token, eventoId, supplierId }),
+    enabled: Boolean(token && eventoId && supplierId)
+  });
+
+  const downloadMutation = useMutation({
+    mutationFn: downloadCatalogo,
+    onError: (error) => setFeedback(error instanceof Error ? error.message : "No se pudo descargar el catálogo.")
+  });
+
+  const profile = profileQuery.data;
+  const catalogo = getCatalogoMeta(profile?.catalogoPDF);
+  const logoUrl = resolveFileUrl(profile?.logoEmpresa);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40" onClick={onClose}>
+      <aside
+        className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-xl transition-transform"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">Perfil ofertante</p>
+            <h2 className="mt-1 text-lg font-semibold text-ink">{profile?.nombreEmpresa ?? "Empresa ofertante"}</h2>
+          </div>
+          <Button variant="secondary" onClick={onClose}>
+            Cerrar
+          </Button>
+        </div>
+
+        {profileQuery.isPending ? <p className="mt-6 text-sm text-muted">Cargando perfil...</p> : null}
+        {profileQuery.isError ? (
+          <div className="mt-6">
+            <EmptyState title="No se pudo cargar el perfil" description="Verifica la conexión e intenta nuevamente." />
+          </div>
+        ) : null}
+
+        {profile ? (
+          <div className="mt-6 space-y-5">
+            <div className="flex items-center gap-4">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent/10 text-xl font-bold text-accent ring-1 ring-accent/20">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="h-full w-full object-cover" src={logoUrl} alt={profile.nombreEmpresa ?? "Empresa"} />
+                ) : (
+                  getInitials(profile.nombreEmpresa)
+                )}
+              </div>
+              <div className="min-w-0">
+                <h3 className="truncate text-xl font-semibold text-ink">{profile.nombreEmpresa ?? "Empresa sin nombre"}</h3>
+                <p className="mt-1 text-sm text-muted">{profile.sector ?? "Sector no registrado"}</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Descripción</p>
+              <p className="mt-2 text-sm text-ink">{profile.descripcion || "Sin descripción registrada."}</p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["Sector", profile.sector || "No registrado"],
+                ["Ciudad", profile.ciudad || "No registrada"],
+                ["País", profile.pais || "No registrado"],
+                ["Representante legal", profile.representante?.nombre || "No registrado"],
+                ["Correo", profile.datosContacto?.correo || profile.email || "No registrado"],
+                ["Teléfono", profile.datosContacto?.telefono || "No registrado"]
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
+                  <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Catálogo</p>
+              {catalogo ? (
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-semibold text-ink">{catalogo.nombreArchivo}</p>
+                  <Button
+                    loading={downloadMutation.isPending}
+                    onClick={() => {
+                      setFeedback(null);
+                      downloadMutation.mutate({
+                        token,
+                        userId: profile._id,
+                        filename: catalogo.nombreArchivo
+                      });
+                    }}
+                  >
+                    Descargar catálogo
+                  </Button>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted">No disponible</p>
+              )}
+              {feedback ? <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{feedback}</p> : null}
+            </div>
+          </div>
+        ) : null}
+      </aside>
+    </div>
+  );
+}
 
 function EventSelector({
   eventos,
@@ -251,7 +492,7 @@ function SupplierMatrix({ workspace }: { workspace: SupplierMeetingWorkspace }) 
   const activeDay = workspace.matrix.find((day) => day.key === activeDayKey) ?? workspace.matrix[0];
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-ink">Agenda por mesas</h2>
@@ -274,29 +515,34 @@ function SupplierMatrix({ workspace }: { workspace: SupplierMeetingWorkspace }) 
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <div className="min-w-[760px]">
+      <div className="mt-4 max-w-full overflow-auto rounded-xl border border-slate-200">
+        <div style={{ width: `${120 + workspace.tables.length * 132}px`, minWidth: "760px" }}>
           <div
-            className="grid gap-2"
-            style={{ gridTemplateColumns: `120px repeat(${workspace.tables.length}, minmax(108px, 1fr))` }}
+            className="grid"
+            style={{ gridTemplateColumns: `120px repeat(${workspace.tables.length}, 132px)` }}
           >
-            <div className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-muted">Hora</div>
+            <div className="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-muted">
+              Hora
+            </div>
             {workspace.tables.map((tableNumber) => (
-              <div key={tableNumber} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-muted">
+              <div
+                key={tableNumber}
+                className="sticky top-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-muted"
+              >
                 Mesa {tableNumber}
               </div>
             ))}
 
             {activeDay?.rows.map((row) => (
               <div key={`${activeDay.key}-${row.startTime}`} className="contents">
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-semibold text-ink">
+                <div className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-3 py-3 text-xs font-semibold text-ink">
                   {row.label}
                 </div>
                 {row.tables.map((cell) => (
                   <div
                     key={`${row.startTime}-${cell.tableNumber}`}
                     className={cn(
-                      "min-h-16 rounded-xl border px-3 py-2 text-xs",
+                      "min-h-16 border-b border-r px-3 py-2 text-xs",
                       cell.reservedByMe
                         ? "border-accent/30 bg-accent/10 text-accent"
                         : cell.status === "reserved"
@@ -384,7 +630,7 @@ function SupplierWorkspaceView({ eventoId, token }: { eventoId: string; token: s
                 <p className="mt-1 text-sm text-muted">Cada reserva bloquea todas las sesiones de esa mesa durante el día seleccionado.</p>
               </div>
               <Button onClick={() => setShowReservePanel((value) => !value)}>
-                {showReservePanel ? "Ocultar reserva" : "Reservar mesa"}
+                {showReservePanel ? "Salir" : "Reservar mesa"}
               </Button>
             </div>
 
@@ -419,64 +665,89 @@ function SupplierWorkspaceView({ eventoId, token }: { eventoId: string; token: s
 }
 
 function SupplierLogo({ card }: { card: BuyerSupplierCard }) {
-  const logo = card.supplier.logoEmpresa;
-  const canRenderLogo = Boolean(logo && (logo.startsWith("http") || logo.startsWith("/")));
-
-  return (
-    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent/10 text-sm font-bold text-accent ring-1 ring-accent/20">
-      {canRenderLogo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="h-full w-full object-cover" src={logo ?? ""} alt={card.supplier.nombreEmpresa ?? "Logo empresa"} />
-      ) : (
-        getInitials(card.supplier.nombreEmpresa)
-      )}
-    </div>
-  );
+  return <MeetingLogo logo={card.supplier.logoEmpresa} name={card.supplier.nombreEmpresa} />;
 }
 
 function SessionButton({
   session,
   onReserve,
+  onCancel,
+  isMine,
   loading
 }: {
   session: MeetingEntity;
   onReserve: (meetingId: string) => void;
+  onCancel: (session: MeetingEntity) => void;
+  isMine: boolean;
   loading: boolean;
 }) {
   const available = session.status === "available";
   const reserved = session.status === "reserved";
+  const canCancel = isMine && reserved && canCancelMeeting(session);
 
   return (
     <button
       type="button"
-      disabled={!available || loading}
-      onClick={() => onReserve(session._id)}
+      disabled={(!available && !isMine) || loading}
+      onClick={() => {
+        if (available) {
+          onReserve(session._id);
+          return;
+        }
+
+        if (isMine) {
+          onCancel(session);
+        }
+      }}
       className={cn(
         "rounded-xl border px-3 py-2 text-left text-xs transition disabled:cursor-not-allowed",
         available
           ? "border-success/30 bg-success/10 text-success hover:border-success/60"
-          : reserved
-            ? "border-slate-200 bg-slate-100 text-muted"
+          : isMine
+            ? canCancel
+              ? "border-danger/30 bg-danger/10 text-danger hover:border-danger/60"
+              : "border-warning/30 bg-warning/10 text-warning"
+            : reserved
+              ? "border-slate-200 bg-slate-100 text-muted"
             : "border-slate-200 bg-slate-100 text-muted"
       )}
     >
       <span className="block font-semibold">{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
-      <span className="mt-1 block">{available ? "Reservar sesión" : session.status === "completed" ? "Finalizada" : "Reservada"}</span>
+      <span className="mt-1 block">
+        {available
+          ? "Reservar sesión"
+          : isMine
+            ? canCancel
+              ? "Cancelar reunión"
+              : "Menos de 24 horas"
+            : session.status === "completed"
+              ? "Finalizada"
+              : "Reservada"}
+      </span>
     </button>
   );
 }
 
 function BuyerMarketplaceView({ eventoId, token }: { eventoId: string; token: string }) {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("todos");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [reservedMeeting, setReservedMeeting] = useState<MeetingEntity | null>(null);
+  const [meetingToCancel, setMeetingToCancel] = useState<MeetingEntity | null>(null);
+  const [cancelledMeeting, setCancelledMeeting] = useState<MeetingEntity | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
 
   useEffect(() => {
     setSearch("");
     setSector("todos");
     setFeedback(null);
+    setReservedMeeting(null);
+    setMeetingToCancel(null);
+    setCancelledMeeting(null);
+    setSelectedSupplierId(null);
   }, [eventoId]);
 
   const marketplaceQuery = useQuery({
@@ -487,14 +758,31 @@ function BuyerMarketplaceView({ eventoId, token }: { eventoId: string; token: st
 
   const reserveMutation = useMutation({
     mutationFn: reserveBuyerSession,
-    onSuccess: () => {
-      setFeedback({ type: "success", message: "Sesión reservada correctamente." });
+    onSuccess: (data) => {
+      setReservedMeeting(data.meeting);
       queryClient.invalidateQueries({ queryKey: ["meetings", "demandante", eventoId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "meetings"] });
     },
     onError: (error) => {
       setFeedback({
         type: "error",
         message: error instanceof Error ? error.message : "No se pudo reservar la sesión."
+      });
+    }
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: cancelBuyerSession,
+    onSuccess: (data) => {
+      setMeetingToCancel(null);
+      setCancelledMeeting(data.meeting);
+      queryClient.invalidateQueries({ queryKey: ["meetings", "demandante", eventoId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "meetings"] });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "No se pudo cancelar la reunión."
       });
     }
   });
@@ -505,6 +793,53 @@ function BuyerMarketplaceView({ eventoId, token }: { eventoId: string; token: st
   return (
     <section className="space-y-5">
       {feedback ? <div className={cn("rounded-xl px-4 py-3 text-sm font-semibold ring-1", getFeedbackClass(feedback.type))}>{feedback.message}</div> : null}
+
+      {reservedMeeting ? (
+        <ModalShell title="Reunión confirmada" onClose={() => setReservedMeeting(null)}>
+          <MeetingDetails meeting={reservedMeeting} />
+          <div className="mt-5 flex justify-end">
+            <Button onClick={() => setReservedMeeting(null)}>Ir a mis reuniones</Button>
+          </div>
+        </ModalShell>
+      ) : null}
+
+      {meetingToCancel ? (
+        <ModalShell title="Cancelar reunión" onClose={() => setMeetingToCancel(null)}>
+          <p className="mt-3 text-sm text-muted">
+            ¿Desea cancelar esta reunión? La sesión volverá a estar disponible para otros participantes.
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button variant="secondary" onClick={() => setMeetingToCancel(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              loading={cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate({ token, meetingId: meetingToCancel._id })}
+            >
+              Confirmar cancelación
+            </Button>
+          </div>
+        </ModalShell>
+      ) : null}
+
+      {cancelledMeeting ? (
+        <ModalShell title="Reunión cancelada" onClose={() => setCancelledMeeting(null)}>
+          <MeetingDetails meeting={cancelledMeeting} showStatus={false} />
+          <div className="mt-5 flex justify-end">
+            <Button onClick={() => setCancelledMeeting(null)}>Cerrar</Button>
+          </div>
+        </ModalShell>
+      ) : null}
+
+      {selectedSupplierId ? (
+        <SupplierProfileDrawer
+          token={token}
+          eventoId={eventoId}
+          supplierId={selectedSupplierId}
+          onClose={() => setSelectedSupplierId(null)}
+        />
+      ) : null}
 
       <Card>
         <div className="grid gap-3 lg:grid-cols-[1fr_220px] lg:items-end">
@@ -549,7 +884,13 @@ function BuyerMarketplaceView({ eventoId, token }: { eventoId: string; token: st
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <h2 className="truncate text-base font-semibold text-ink">{card.supplier.nombreEmpresa}</h2>
+                    <button
+                      type="button"
+                      className="max-w-full truncate text-left text-base font-semibold text-accent underline-offset-4 hover:underline"
+                      onClick={() => setSelectedSupplierId(card.supplier._id)}
+                    >
+                      {card.supplier.nombreEmpresa}
+                    </button>
                     <p className="mt-1 text-sm text-muted">{card.supplier.sector || "Sector no registrado"}</p>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs font-semibold">
@@ -565,10 +906,22 @@ function BuyerMarketplaceView({ eventoId, token }: { eventoId: string; token: st
                     <SessionButton
                       key={session._id}
                       session={session}
-                      loading={reserveMutation.isPending}
+                      loading={reserveMutation.isPending || cancelMutation.isPending}
+                      isMine={session.buyerId === user?._id}
                       onReserve={(meetingId) => {
                         setFeedback(null);
                         reserveMutation.mutate({ token, meetingId });
+                      }}
+                      onCancel={(selectedSession) => {
+                        setFeedback(null);
+                        if (!canCancelMeeting(selectedSession)) {
+                          setFeedback({
+                            type: "error",
+                            message: "Solo puedes cancelar una reunión hasta 24 horas antes de la hora programada."
+                          });
+                          return;
+                        }
+                        setMeetingToCancel(selectedSession);
                       }}
                     />
                   ))}

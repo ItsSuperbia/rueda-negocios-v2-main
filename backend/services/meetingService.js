@@ -1,5 +1,6 @@
 const Evento = require("../models/Evento");
 const EventoInscripcion = require("../models/EventoInscripcion");
+const Match = require("../models/Match");
 const Meeting = require("../models/Meeting");
 const TableReservation = require("../models/TableReservation");
 
@@ -102,6 +103,18 @@ const formatTime = (date) =>
         minute: "2-digit",
         hour12: false
     });
+
+const CANCELLATION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+const canCancelBeforeWindow = (startTime) => {
+    const start = new Date(startTime);
+    return !Number.isNaN(start.getTime()) && start.getTime() - Date.now() >= CANCELLATION_WINDOW_MS;
+};
+
+const isEventStarted = (evento) => {
+    const start = new Date(evento.startDate);
+    return !Number.isNaN(start.getTime()) && start.getTime() <= Date.now();
+};
 
 const assertEmpresaRole = (user) => {
     if (!isEmpresaRole(user.role)) {
@@ -389,7 +402,24 @@ const reserveSupplierTable = async ({ user, eventoId, tableNumber, dayKeys }) =>
             }));
 
             if (meetings.length) {
-                await Meeting.insertMany(meetings, { ordered: true });
+                await Meeting.bulkWrite(
+                    meetings.map((meeting) => ({
+                        updateOne: {
+                            filter: {
+                                evento: meeting.evento,
+                                dayKey: meeting.dayKey,
+                                tableNumber: meeting.tableNumber,
+                                startTime: meeting.startTime
+                            },
+                            update: {
+                                $set: meeting,
+                                $unset: { buyerId: "", feedback: "" }
+                            },
+                            upsert: true
+                        }
+                    })),
+                    { ordered: true }
+                );
             }
         }
 
@@ -535,11 +565,200 @@ const reserveBuyerSession = async ({ user, meetingId }) => {
     return normalizeMeeting(reserved);
 };
 
+const cancelBuyerSession = async ({ user, meetingId }) => {
+    assertRole(user, "demandante");
+
+    const meeting = await Meeting.findById(meetingId)
+        .populate("supplierId", "nombreEmpresa logoEmpresa sector")
+        .populate("buyerId", "nombreEmpresa logoEmpresa sector");
+
+    if (!meeting) {
+        throw new MeetingBusinessError("Reunión no encontrada", 404);
+    }
+
+    if (String(meeting.buyerId?._id ?? meeting.buyerId) !== String(user.id)) {
+        throw new MeetingBusinessError("No tienes permiso para cancelar esta reunión", 403);
+    }
+
+    if (meeting.status !== "reserved") {
+        throw new MeetingBusinessError("Solo puedes cancelar reuniones confirmadas", 400);
+    }
+
+    if (!canCancelBeforeWindow(meeting.startTime)) {
+        throw new MeetingBusinessError("Solo puedes cancelar la reunión hasta 24 horas antes de la hora programada", 400);
+    }
+
+    const cancelledMeeting = normalizeMeeting(meeting);
+
+    meeting.status = "available";
+    meeting.buyerId = undefined;
+    meeting.feedback = "";
+    await meeting.save();
+
+    // TODO: Enviar notificación al ofertante cuando se implemente el módulo de notificaciones
+
+    return {
+        cancelledMeeting,
+        availableMeeting: normalizeMeeting(await meeting.populate("supplierId", "nombreEmpresa logoEmpresa sector"))
+    };
+};
+
+const cancelDemandanteMeetingsForEvent = async ({ eventoId, userId }) => {
+    const result = await Meeting.updateMany(
+        {
+            evento: eventoId,
+            buyerId: userId,
+            status: "reserved"
+        },
+        {
+            $set: { status: "available", feedback: "" },
+            $unset: { buyerId: "" }
+        }
+    );
+
+    return result.modifiedCount ?? 0;
+};
+
+const cancelSupplierResourcesForEvent = async ({ eventoId, userId }) => {
+    const [reservationResult, meetingResult] = await Promise.all([
+        TableReservation.updateMany(
+            {
+                evento: eventoId,
+                supplierId: userId,
+                status: "reserved"
+            },
+            { $set: { status: "cancelled" } }
+        ),
+        Meeting.updateMany(
+            {
+                evento: eventoId,
+                supplierId: userId,
+                status: { $in: ["available", "reserved"] }
+            },
+            {
+                $set: { status: "available", feedback: "" },
+                $unset: { buyerId: "" }
+            }
+        )
+    ]);
+
+    // TODO: Notificar a demandantes afectados cuando exista módulo de notificaciones
+
+    return {
+        reservationsReleased: reservationResult.modifiedCount ?? 0,
+        meetingsReleased: meetingResult.modifiedCount ?? 0
+    };
+};
+
+const cancelRegistrationResources = async ({ user, eventoId }) => {
+    assertEmpresaRole(user);
+
+    const evento = await Evento.findById(eventoId).lean();
+
+    if (!evento) {
+        throw new MeetingBusinessError("Evento no encontrado", 404);
+    }
+
+    if (user.role === "ofertante") {
+        if (isEventStarted(evento)) {
+            throw new MeetingBusinessError("No puedes cancelar la inscripción porque el evento ya inició", 400);
+        }
+
+        return cancelSupplierResourcesForEvent({ eventoId: evento._id, userId: user.id });
+    }
+
+    const meetingsReleased = await cancelDemandanteMeetingsForEvent({ eventoId: evento._id, userId: user.id });
+    return { meetingsReleased };
+};
+
+const getMeetingsForUser = async (user) => {
+    let query = {};
+
+    if (user.role === "ofertante") {
+        const matches = await Match.find({ supplierId: user.id }).select("_id").lean();
+        query = {
+            $or: [
+                { supplierId: user.id },
+                { matchId: { $in: matches.map((match) => match._id) } }
+            ],
+            status: { $in: ["reserved", "scheduled", "completed", "cancelled", "no_show"] }
+        };
+    } else if (user.role === "demandante") {
+        const matches = await Match.find({ buyerId: user.id }).select("_id").lean();
+        query = {
+            $or: [
+                { buyerId: user.id },
+                { matchId: { $in: matches.map((match) => match._id) } }
+            ],
+            status: { $in: ["reserved", "scheduled", "completed", "cancelled", "no_show"] }
+        };
+    } else if (user.role === "adminEvento") {
+        const eventos = await Evento.find({ createdBy: user.id }).select("_id").lean();
+        query = {
+            evento: { $in: eventos.map((evento) => evento._id) },
+            status: { $in: ["reserved", "scheduled", "completed", "cancelled", "no_show"] }
+        };
+    } else if (user.role === "adminSistema") {
+        query = { status: { $in: ["reserved", "scheduled", "completed", "cancelled", "no_show"] } };
+    } else {
+        throw new MeetingBusinessError("No tienes permiso para consultar reuniones", 403);
+    }
+
+    const meetings = await Meeting.find(query)
+        .populate("supplierId", "nombreEmpresa logoEmpresa sector")
+        .populate("buyerId", "nombreEmpresa logoEmpresa sector")
+        .populate("evento", "title startDate endDate")
+        .populate({
+            path: "matchId",
+            populate: { path: "supplierId buyerId", select: "nombreEmpresa logoEmpresa sector" }
+        })
+        .sort({ startTime: 1, tableNumber: 1 })
+        .lean();
+
+    return meetings.map((meeting) => {
+        const normalized = normalizeMeeting(meeting);
+        const match = meeting.matchId;
+
+        return {
+            ...normalized,
+            matchId: match?._id ? String(match._id) : normalized.matchId,
+            evento: meeting.evento?._id ? String(meeting.evento._id) : normalized.evento,
+            eventoInfo: meeting.evento?._id
+                ? {
+                    _id: String(meeting.evento._id),
+                    title: meeting.evento.title,
+                    startDate: meeting.evento.startDate,
+                    endDate: meeting.evento.endDate
+                }
+                : null,
+            supplier: normalized.supplier ?? (match?.supplierId?._id
+                ? {
+                    _id: String(match.supplierId._id),
+                    nombreEmpresa: match.supplierId.nombreEmpresa,
+                    logoEmpresa: match.supplierId.logoEmpresa,
+                    sector: match.supplierId.sector
+                }
+                : null),
+            buyer: normalized.buyer ?? (match?.buyerId?._id
+                ? {
+                    _id: String(match.buyerId._id),
+                    nombreEmpresa: match.buyerId.nombreEmpresa,
+                    logoEmpresa: match.buyerId.logoEmpresa,
+                    sector: match.buyerId.sector
+                }
+                : null)
+        };
+    });
+};
+
 module.exports = {
     MeetingBusinessError,
     getMyRegisteredEvents,
     getSupplierWorkspace,
     reserveSupplierTable,
     getBuyerMarketplace,
-    reserveBuyerSession
+    reserveBuyerSession,
+    cancelBuyerSession,
+    cancelRegistrationResources,
+    getMeetingsForUser
 };

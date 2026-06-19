@@ -2,14 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusChip } from "@/components/ui/status-chip";
-import { getProfile, updateProfile } from "@/features/perfil/api";
+import { deleteCatalogo, downloadCatalogo, getProfile, updateProfile, uploadCatalogo } from "@/features/perfil/api";
 import { profileSchema, ProfileFormValues } from "@/features/perfil/schema";
+import type { CatalogoPDF } from "@/shared/types/domain";
 import { useAuthStore } from "@/store/auth-store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://gisistinfo.unicartagena.edu.co:3003";
@@ -48,6 +49,21 @@ const resolveFileUrl = (path?: string) => {
   return normalized;
 };
 
+const getCatalogoMeta = (catalogo?: string | CatalogoPDF | null): CatalogoPDF | null => {
+  if (!catalogo) return null;
+  if (typeof catalogo === "string") {
+    return catalogo
+      ? {
+          nombreArchivo: catalogo.split(/[\\/]/).pop() ?? "catalogo.pdf",
+          url: catalogo,
+          fechaCarga: null
+        }
+      : null;
+  }
+
+  return catalogo;
+};
+
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm">
@@ -62,6 +78,8 @@ export function ProfileWorkspace() {
   const role = useAuthStore((state) => state.role);
   const setSession = useAuthStore((state) => state.setSession);
   const queryClient = useQueryClient();
+  const [catalogoFile, setCatalogoFile] = useState<File | null>(null);
+  const [catalogoFeedback, setCatalogoFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const profileQuery = useQuery({
     queryKey: ["profile"],
@@ -76,6 +94,51 @@ export function ProfileWorkspace() {
       if (token) {
         setSession(token, payload.user);
       }
+    }
+  });
+
+  const catalogoMutation = useMutation({
+    mutationFn: uploadCatalogo,
+    onSuccess: (payload) => {
+      setCatalogoFile(null);
+      setCatalogoFeedback({ type: "success", message: "Catálogo actualizado correctamente." });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      if (token) {
+        setSession(token, payload.user);
+      }
+    },
+    onError: (error) => {
+      setCatalogoFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "No se pudo actualizar el catálogo."
+      });
+    }
+  });
+
+  const deleteCatalogoMutation = useMutation({
+    mutationFn: deleteCatalogo,
+    onSuccess: (payload) => {
+      setCatalogoFeedback({ type: "success", message: "Catálogo eliminado correctamente." });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      if (token) {
+        setSession(token, payload.user);
+      }
+    },
+    onError: (error) => {
+      setCatalogoFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "No se pudo eliminar el catálogo."
+      });
+    }
+  });
+
+  const downloadCatalogoMutation = useMutation({
+    mutationFn: downloadCatalogo,
+    onError: (error) => {
+      setCatalogoFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "No se pudo descargar el catálogo."
+      });
     }
   });
 
@@ -109,7 +172,10 @@ export function ProfileWorkspace() {
     if (!profileQuery.data) return;
 
     reset({
+      descripcion: profileQuery.data.descripcion ?? "",
       sector: profileQuery.data.sector ?? "",
+      ciudad: profileQuery.data.ciudad ?? "",
+      pais: profileQuery.data.pais ?? "Colombia",
       formalizada: profileQuery.data.formalizada ? "true" : "false",
       datosContacto: {
         correo: profileQuery.data.datosContacto?.correo ?? profileQuery.data.email ?? "",
@@ -145,7 +211,7 @@ export function ProfileWorkspace() {
 
   const profile = profileQuery.data;
   const rutUrl = resolveFileUrl(profile.documentosFormalizados?.rut);
-  const catalogoUrl = resolveFileUrl(profile.catalogoPDF);
+  const catalogoMeta = getCatalogoMeta(profile.catalogoPDF);
   const logoUrl = resolveFileUrl(profile.logoEmpresa);
 
   const onSubmit = (values: ProfileFormValues) => {
@@ -171,6 +237,9 @@ export function ProfileWorkspace() {
     if (values.sector) {
       formData.append("sector", values.sector);
     }
+    formData.append("descripcion", values.descripcion ?? "");
+    formData.append("ciudad", values.ciudad ?? "");
+    formData.append("pais", values.pais ?? "");
     if (values.formalizada) {
       formData.append("formalizada", values.formalizada);
     }
@@ -203,14 +272,16 @@ export function ProfileWorkspace() {
       formData.append("rutFile", rutFile);
     }
 
-    if (role === "ofertante") {
-      const catalogoFile = values.catalogoFile instanceof FileList ? values.catalogoFile.item(0) : null;
-      if (catalogoFile) {
-        formData.append("catalogoFile", catalogoFile);
-      }
-    }
-
     updateMutation.mutate({ token, data: formData });
+  };
+
+  const handleCatalogoUpload = () => {
+    if (!token || !catalogoFile) return;
+
+    const formData = new FormData();
+    formData.append("catalogoFile", catalogoFile);
+    setCatalogoFeedback(null);
+    catalogoMutation.mutate({ token, data: formData });
   };
 
   return (
@@ -238,6 +309,8 @@ export function ProfileWorkspace() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InfoItem label="Sector" value={profile.sector ?? "Sin definir"} />
+          <InfoItem label="Ciudad" value={profile.ciudad ?? "Sin definir"} />
+          <InfoItem label="País" value={profile.pais ?? "Colombia"} />
           <InfoItem label="Formalizada" value={profile.formalizada ? "Si" : "No"} />
           <InfoItem label="NIT" value={profile.nit ?? "No registrado"} />
           <InfoItem label="Correo de registro" value={profile.email} />
@@ -284,13 +357,29 @@ export function ProfileWorkspace() {
 
             {role === "ofertante" ? (
               <div className="rounded-xl border border-slate-200/70 bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-muted">Catalogo comercial (PDF)</p>
-                {catalogoUrl ? (
-                  <a className="mt-1 inline-flex items-center text-sm font-semibold text-accent underline" href={catalogoUrl} target="_blank" rel="noreferrer">
-                    Ver catalogo
-                  </a>
+                <p className="text-xs uppercase tracking-wide text-muted">Catálogo comercial (PDF)</p>
+                {catalogoMeta ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-ink">{catalogoMeta.nombreArchivo}</span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      loading={downloadCatalogoMutation.isPending}
+                      onClick={() => {
+                        if (!token) return;
+                        setCatalogoFeedback(null);
+                        downloadCatalogoMutation.mutate({
+                          token,
+                          userId: profile._id,
+                          filename: catalogoMeta.nombreArchivo
+                        });
+                      }}
+                    >
+                      Descargar
+                    </Button>
+                  </div>
                 ) : (
-                  <p className="mt-1 text-muted">No hay catalogo cargado</p>
+                  <p className="mt-1 text-muted">No hay catálogo cargado</p>
                 )}
               </div>
             ) : null}
@@ -309,6 +398,20 @@ export function ProfileWorkspace() {
 
         <form className="mt-6 space-y-6" onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
           <div className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-semibold text-ink" htmlFor="descripcion">
+                Descripción comercial
+              </label>
+              <textarea
+                id="descripcion"
+                rows={4}
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-accent focus:ring-2 focus:ring-accent/20"
+                placeholder="Describe brevemente tu empresa, oferta comercial y fortalezas."
+                {...register("descripcion")}
+              />
+              {errors.descripcion ? <p className="mt-1 text-xs text-danger">{errors.descripcion.message}</p> : null}
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-semibold text-ink" htmlFor="sector">
                 Sector economico
@@ -326,6 +429,30 @@ export function ProfileWorkspace() {
                 ))}
               </select>
               {errors.sector ? <p className="mt-1 text-xs text-danger">{errors.sector.message}</p> : null}
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-ink" htmlFor="ciudad">
+                Ciudad
+              </label>
+              <input
+                id="ciudad"
+                type="text"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-accent focus:ring-2 focus:ring-accent/20"
+                {...register("ciudad")}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-ink" htmlFor="pais">
+                País
+              </label>
+              <input
+                id="pais"
+                type="text"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-accent focus:ring-2 focus:ring-accent/20"
+                {...register("pais")}
+              />
             </div>
 
             <div>
@@ -469,21 +596,6 @@ export function ProfileWorkspace() {
             </div>
           </div>
 
-          {role === "ofertante" ? (
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-ink" htmlFor="catalogoFile">
-                Catalogo comercial (PDF)
-              </label>
-              <input
-                id="catalogoFile"
-                type="file"
-                accept=".pdf"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold focus:border-accent focus:ring-2 focus:ring-accent/20"
-                {...register("catalogoFile")}
-              />
-            </div>
-          ) : null}
-
           {updateMutation.isError ? (
             <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">No se pudo actualizar el perfil.</p>
           ) : null}
@@ -498,6 +610,92 @@ export function ProfileWorkspace() {
           </div>
         </form>
       </Card>
+
+      {role === "ofertante" ? (
+        <Card className="fade-up bg-white/95">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted">Catálogo Comercial</p>
+              <h2 className="mt-1 text-lg font-semibold text-ink">PDF descargable para compradores</h2>
+              <p className="mt-1 text-sm text-muted">Carga un único archivo PDF. Al reemplazarlo, el catálogo anterior deja de estar disponible.</p>
+            </div>
+            <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-muted">
+              {catalogoMeta ? "Catálogo actual" : "No disponible"}
+            </span>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            {catalogoMeta ? (
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-ink">{catalogoMeta.nombreArchivo}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {catalogoMeta.fechaCarga ? `Cargado el ${new Date(catalogoMeta.fechaCarga).toLocaleDateString("es-CO")}` : "Catálogo cargado"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    loading={downloadCatalogoMutation.isPending}
+                    onClick={() => {
+                      if (!token) return;
+                      setCatalogoFeedback(null);
+                      downloadCatalogoMutation.mutate({
+                        token,
+                        userId: profile._id,
+                        filename: catalogoMeta.nombreArchivo
+                      });
+                    }}
+                  >
+                    Descargar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    loading={deleteCatalogoMutation.isPending}
+                    onClick={() => {
+                      if (!token) return;
+                      setCatalogoFeedback(null);
+                      deleteCatalogoMutation.mutate(token);
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="mb-4 text-sm text-muted">Catálogo actual: No disponible</p>
+            )}
+
+            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+              <input
+                id="catalogoFile"
+                type="file"
+                accept=".pdf"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold focus:border-accent focus:ring-2 focus:ring-accent/20"
+                onChange={(event) => {
+                  setCatalogoFeedback(null);
+                  setCatalogoFile(event.target.files?.item(0) ?? null);
+                }}
+              />
+              <Button type="button" disabled={!catalogoFile} loading={catalogoMutation.isPending} onClick={handleCatalogoUpload}>
+                {catalogoMeta ? "Reemplazar" : "Subir PDF"}
+              </Button>
+            </div>
+
+            {catalogoFeedback ? (
+              <p
+                className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+                  catalogoFeedback.type === "success" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                }`}
+              >
+                {catalogoFeedback.message}
+              </p>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
     </section>
   );
 }

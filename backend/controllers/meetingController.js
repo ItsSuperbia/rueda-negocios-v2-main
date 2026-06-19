@@ -7,8 +7,11 @@ const {
     getSupplierWorkspace,
     reserveSupplierTable,
     getBuyerMarketplace,
-    reserveBuyerSession
+    reserveBuyerSession,
+    cancelBuyerSession,
+    getMeetingsForUser
 } = require("../services/meetingService");
+const { notificationBus } = require("../services/notificationService");
 
 const isAdminRole = (role) => role === "adminSistema" || role === "adminEvento";
 
@@ -46,8 +49,11 @@ exports.scheduleMeeting = async (req, res) => {
             status: "scheduled"
         });
 
-        // Simulación de notificación
-        await sendNotification(match.supplierId, match.buyerId, meeting);
+        notificationBus.emit("meeting:created", {
+            meeting,
+            supplierId: match.supplierId,
+            buyerId: match.buyerId,
+        });
 
         res.status(201).json({ message: "Reunión agendada exitosamente", meeting });
 
@@ -56,18 +62,6 @@ exports.scheduleMeeting = async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };
-
-// 📧 Simular envío de correo
-const sendNotification = async (supplierId, buyerId, meeting) => {
-    const supplier = await User.findById(supplierId);
-    const buyer = await User.findById(buyerId);
-
-    console.log(`📧 [EMAIL MOCK] Enviando correo a ${supplier.email} y ${buyer.email}`);
-    console.log(`📅 Asunto: Nueva reunión agendada para el ${meeting.startTime}`);
-    console.log(`📍 Lugar: ${meeting.location}`);
-};
-
-exports.sendNotification = sendNotification;
 
 const handleMeetingError = (error, res) => {
     if (error instanceof MeetingBusinessError) {
@@ -147,30 +141,30 @@ exports.reserveSession = async (req, res) => {
     }
 };
 
+exports.cancelSession = async (req, res) => {
+    try {
+        const result = await cancelBuyerSession({
+            user: req.user,
+            meetingId: req.params.meetingId
+        });
+
+        res.json({
+            message: "Reunión cancelada correctamente",
+            meeting: result.cancelledMeeting,
+            availableMeeting: result.availableMeeting
+        });
+    } catch (error) {
+        handleMeetingError(error, res);
+    }
+};
+
 // 🗓️ Obtener agenda
 exports.getSchedule = async (req, res) => {
     try {
-        const userId = req.user.id;
-
-        // Buscar matches del usuario
-        const matches = await Match.find({
-            $or: [{ supplierId: userId }, { buyerId: userId }]
-        }).select('_id');
-
-        const matchIds = matches.map(m => m._id);
-
-        // Buscar reuniones de esos matches
-        const meetings = await Meeting.find({ matchId: { $in: matchIds } })
-            .populate({
-                path: 'matchId',
-                populate: { path: 'supplierId buyerId', select: 'nombreEmpresa email' }
-            })
-            .sort({ startTime: 1 });
-
+        const meetings = await getMeetingsForUser(req.user);
         res.json(meetings);
 
     } catch (error) {
-        console.error("Error obteniendo agenda:", error);
-        res.status(500).json({ message: "Error interno del servidor" });
+        handleMeetingError(error, res);
     }
 };

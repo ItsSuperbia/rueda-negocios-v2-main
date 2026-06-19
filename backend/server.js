@@ -24,12 +24,16 @@ const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 app.use("/api/matches", require("./routes/matchRoutes"));
 app.use("/api/meetings", require("./routes/meetingRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 
 app.get("/", (req, res) => {
     res.send("Bienvenido al backend de Rueda de Negocios 🚀");
 });
 
 app.use("/api/eventos", require("./routes/eventoRoutes"));
+
+const { startReminderJob } = require("./services/reminderJob");
+startReminderJob();
 
 // Ruta de prueba (para verificar servidor)
 app.get("/api", (req, res) => {

@@ -65,6 +65,8 @@ export function EventosWorkspace() {
 
       {role === "adminSistema" ? (
         <>
+          <AdminEventoEventos onCreate={() => undefined} />
+
           <Card>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>

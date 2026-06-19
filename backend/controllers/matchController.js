@@ -7,7 +7,7 @@ const isAdminRole = (role) => role === "adminSistema" || role === "adminEvento";
 exports.generateMatches = async (req, res) => {
     try {
         // 1. Obtener todos los ofertantes y demandantes
-        const suppliers = await User.find({ role: "ofertante", formalizada: true });
+        const suppliers = await User.find({ role: "ofertante"});
         const buyers = await User.find({ role: "demandante" });
 
         let matchesCreated = 0;
@@ -36,6 +36,7 @@ exports.generateMatches = async (req, res) => {
         }
 
         const totalMatches = await Match.countDocuments();
+        console.log("matches generados:", matchesCreated, "matches totales: ", totalMatches)
 
         res.json({
             message: `Se generaron ${matchesCreated} nuevos matches potenciales.`,

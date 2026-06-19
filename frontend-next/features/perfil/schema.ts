@@ -3,7 +3,10 @@ import { z } from "zod";
 const optionalEmail = z.string().email("Ingresa un correo valido").optional().or(z.literal(""));
 
 export const profileSchema = z.object({
+  descripcion: z.string().max(600, "Máximo 600 caracteres").optional(),
   sector: z.string().optional(),
+  ciudad: z.string().optional(),
+  pais: z.string().optional(),
   formalizada: z.enum(["true", "false"]).optional(),
   datosContacto: z
     .object({

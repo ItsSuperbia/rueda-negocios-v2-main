@@ -100,6 +100,11 @@ const getCategoriaLabel = (evento: Evento) => {
 
 const isEventoFull = (evento: Evento) => (evento.inscritos ?? 0) >= evento.cupos;
 
+const hasEventoStarted = (evento: Evento) => {
+  const start = new Date(evento.startDate);
+  return !Number.isNaN(start.getTime()) && start.getTime() <= Date.now();
+};
+
 const getEventoAvailability = (evento: Evento) => {
   const now = new Date();
   const endDate = new Date(evento.endDate);
@@ -137,6 +142,7 @@ export function EmpresaEventos() {
   const [estado, setEstado] = useState("proximos");
   const [page, setPage] = useState(1);
   const [selectedEventoId, setSelectedEventoId] = useState<string | null>(null);
+  const [eventoToCancel, setEventoToCancel] = useState<Evento | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 350);
@@ -185,6 +191,8 @@ export function EmpresaEventos() {
 
   const invalidateEmpresaEventos = () => {
     queryClient.invalidateQueries({ queryKey: ["eventos", "empresa"] });
+    queryClient.invalidateQueries({ queryKey: ["meetings"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     if (selectedEventoId) {
       queryClient.invalidateQueries({ queryKey: ["eventos", "detail", selectedEventoId] });
     }
@@ -205,6 +213,7 @@ export function EmpresaEventos() {
     mutationFn: cancelarInscripcionEvento,
     onSuccess: () => {
       setFeedback({ type: "success", message: copy.cancelMessage });
+      setEventoToCancel(null);
       invalidateEmpresaEventos();
     },
     onError: (error) => {
@@ -242,9 +251,16 @@ export function EmpresaEventos() {
     joinMutation.mutate({ token: token as string, eventoId });
   };
 
-  const handleCancel = (eventoId: string) => {
+  const handleCancel = (evento: Evento) => {
     setFeedback(null);
-    cancelMutation.mutate({ token: token as string, eventoId });
+    if (role === "ofertante" && hasEventoStarted(evento)) {
+      setFeedback({
+        type: "error",
+        message: "No puedes cancelar la inscripción porque el evento ya inició."
+      });
+      return;
+    }
+    setEventoToCancel(evento);
   };
 
   const renderEventoAction = (evento: Evento) => {
@@ -253,7 +269,7 @@ export function EmpresaEventos() {
         <Button
           variant="danger"
           loading={cancelMutation.isPending}
-          onClick={() => handleCancel(evento._id)}
+          onClick={() => handleCancel(evento)}
         >
           Cancelar inscripción
         </Button>
@@ -569,6 +585,41 @@ export function EmpresaEventos() {
                 </div>
               </div>
             ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {eventoToCancel ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+          onClick={() => setEventoToCancel(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-ink">
+              {role === "ofertante" ? "Cancelar inscripción al evento" : "Cancelar inscripción"}
+            </h2>
+            <p className="mt-3 text-sm text-muted">
+              {role === "ofertante"
+                ? "Esta acción liberará las mesas reservadas y cancelará todas las reuniones asociadas."
+                : "Esta acción cancelará su inscripción al evento y todas las reuniones asociadas. ¿Desea continuar?"}
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button variant="secondary" onClick={() => setEventoToCancel(null)}>
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                loading={cancelMutation.isPending}
+                onClick={() => cancelMutation.mutate({ token: token as string, eventoId: eventoToCancel._id })}
+              >
+                Confirmar cancelación
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}

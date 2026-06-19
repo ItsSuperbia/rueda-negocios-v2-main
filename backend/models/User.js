@@ -23,7 +23,10 @@ const userSchema = new mongoose.Schema(
         // 🏢 Datos principales de la empresa
         nombreEmpresa: { type: String, required: function(){return this.role !== 'adminSistema' && this.role !== 'adminEvento'}},
         logoEmpresa: { type: String, default: "" }, // ruta de imagen
+        descripcion: { type: String, default: "" },
         sector: { type: String, required: function(){return this.role !== 'adminSistema'} },
+        ciudad: { type: String, default: "" },
+        pais: { type: String, default: "Colombia" },
         formalizada: { type: Boolean, required: function(){return this.role !== 'adminSistema'} },
 
         // ☎️ Datos de contacto
@@ -58,7 +61,10 @@ const userSchema = new mongoose.Schema(
         },
 
         // 📘 PDFs comerciales
-        catalogoPDF: { type: String, default: "" },
+        catalogoPDF: {
+            type: mongoose.Schema.Types.Mixed,
+            default: null,
+        },
         necesidadesPDF: { type: String, default: "" },
 
         // ✅ Estado de registro

@@ -152,6 +152,8 @@ export function cancelarInscripcionEvento(payload: { token: string; eventoId: st
 
 export interface EventoInscripcionesParams {
   role?: "todos" | "ofertante" | "demandante";
+  estado?: "todos" | "activa" | "cancelada";
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -161,6 +163,14 @@ export function getEventoInscripciones(token: string, eventoId: string, params: 
 
   if (params.role && params.role !== "todos") {
     searchParams.set("role", params.role);
+  }
+
+  if (params.estado && params.estado !== "todos") {
+    searchParams.set("estado", params.estado);
+  }
+
+  if (params.search) {
+    searchParams.set("search", params.search);
   }
 
   if (params.page) {
@@ -178,4 +188,14 @@ export function getEventoInscripciones(token: string, eventoId: string, params: 
     method: "GET",
     token
   });
+}
+
+export function cancelarParticipanteEvento(payload: { token: string; eventoId: string; inscripcionId: string }) {
+  return apiRequest<{ message: string }>(
+    `/api/eventos/${payload.eventoId}/inscripciones/${payload.inscripcionId}`,
+    {
+      method: "DELETE",
+      token: payload.token
+    }
+  );
 }

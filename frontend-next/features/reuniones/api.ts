@@ -3,6 +3,7 @@ import {
   BuyerMeetingMarketplace,
   Evento,
   MeetingEntity,
+  User,
   SupplierMeetingWorkspace,
   TableReservationEntity
 } from "@/shared/types/domain";
@@ -70,6 +71,23 @@ export function getBuyerMeetingMarketplace(payload: {
 export function reserveBuyerSession(payload: { token: string; meetingId: string }) {
   return apiRequest<{ message: string; meeting: MeetingEntity }>(`/api/meetings/sesiones/${payload.meetingId}/reservar`, {
     method: "POST",
+    token: payload.token
+  });
+}
+
+export function cancelBuyerSession(payload: { token: string; meetingId: string }) {
+  return apiRequest<{ message: string; meeting: MeetingEntity; availableMeeting: MeetingEntity }>(
+    `/api/meetings/sesiones/${payload.meetingId}`,
+    {
+      method: "DELETE",
+      token: payload.token
+    }
+  );
+}
+
+export function getSupplierPublicProfile(payload: { token: string; supplierId: string; eventoId: string }) {
+  return apiRequest<User>(`/api/users/${payload.supplierId}/eventos/${payload.eventoId}/perfil-ofertante`, {
+    method: "GET",
     token: payload.token
   });
 }

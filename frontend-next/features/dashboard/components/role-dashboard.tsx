@@ -11,6 +11,7 @@ import { getPendingEventos } from "@/features/eventos/api";
 import { getPendingUsers } from "@/features/usuarios/api";
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/cn";
+import type { MeetingEntity } from "@/shared/types/domain";
 
 const roleCopy: Record<string, { headline: string; summary: string; actions: { href: string; label: string }[] }> = {
   adminSistema: {
@@ -45,6 +46,110 @@ const roleCopy: Record<string, { headline: string; summary: string; actions: { h
     ]
   }
 };
+
+const formatMeetingDate = (value?: string) => {
+  if (!value) return "Fecha por definir";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Fecha por definir";
+  return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+const formatMeetingTime = (value?: string) => {
+  if (!value) return "--:--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--:--";
+  return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false });
+};
+
+const getInitials = (value?: string) => {
+  if (!value) return "RN";
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+};
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    reserved: "Confirmada",
+    scheduled: "Programada",
+    completed: "Finalizada",
+    cancelled: "Cancelada",
+    no_show: "No asistió"
+  };
+
+  return labels[status] ?? status;
+};
+
+function UpcomingMeetingsSection({
+  meetings,
+  loading,
+  role
+}: {
+  meetings?: MeetingEntity[];
+  loading: boolean;
+  role: string | null;
+}) {
+  const upcoming = (meetings ?? [])
+    .filter((meeting) => {
+      const start = new Date(meeting.startTime);
+      return (
+        !Number.isNaN(start.getTime()) &&
+        start.getTime() >= Date.now() &&
+        (meeting.status === "reserved" || meeting.status === "scheduled")
+      );
+    })
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    .slice(0, 5);
+
+  const getCompany = (meeting: (typeof upcoming)[number]) => {
+    if (role === "ofertante") return meeting.buyer ?? meeting.supplier;
+    return meeting.supplier ?? meeting.buyer;
+  };
+
+  return (
+    <Card className="fade-up bg-white/95">
+      <h2 className="text-lg font-semibold text-ink">Próximas reuniones</h2>
+
+      {loading ? <p className="mt-4 text-sm text-muted">Cargando reuniones...</p> : null}
+      {!loading && upcoming.length === 0 ? <p className="mt-4 text-sm text-muted">No tiene reuniones próximas.</p> : null}
+
+      {upcoming.length ? (
+        <div className="mt-4 grid gap-3">
+          {upcoming.map((meeting) => {
+            const company = getCompany(meeting);
+            const logo = company?.logoEmpresa;
+            const canRenderLogo = Boolean(logo && (logo.startsWith("http") || logo.startsWith("/")));
+
+            return (
+              <div key={meeting._id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent/10 text-xs font-bold text-accent ring-1 ring-accent/20">
+                  {canRenderLogo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="h-full w-full object-cover" src={logo ?? ""} alt={company?.nombreEmpresa ?? "Empresa"} />
+                  ) : (
+                    getInitials(company?.nombreEmpresa)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-ink">{company?.nombreEmpresa ?? "Empresa por confirmar"}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {formatMeetingDate(meeting.startTime)} · {formatMeetingTime(meeting.startTime)} · Mesa {meeting.tableNumber ?? "--"}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success ring-1 ring-success/30">
+                  {getStatusLabel(meeting.status)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
 
 export function RoleDashboard() {
   const token = useAuthStore((state) => state.token);
@@ -94,7 +199,7 @@ export function RoleDashboard() {
   const { data: meetings, isPending: meetingsLoading } = useQuery({
     queryKey: ["dashboard", "meetings"],
     queryFn: () => getMeetings(token as string),
-    enabled: Boolean(token) && isEmpresa
+    enabled: Boolean(token) && Boolean(role)
   });
 
   const generateMatchesMutation = useMutation({
@@ -159,6 +264,8 @@ export function RoleDashboard() {
             {generateMatchesMutation.isError ? <p className="mt-3 text-sm font-medium text-danger">No se pudieron generar los matches.</p> : null}
           </Card>
         </div>
+
+        <UpcomingMeetingsSection meetings={meetings} loading={meetingsLoading} role={role} />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="fade-up">
@@ -300,6 +407,8 @@ export function RoleDashboard() {
           </Card>
         </div>
 
+        <UpcomingMeetingsSection meetings={meetings} loading={meetingsLoading} role={role} />
+
         <Card className="bg-white/95">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-accent" />
@@ -367,7 +476,15 @@ export function RoleDashboard() {
   }
 
   const acceptedMatches = matches?.filter((item) => item.status === "accepted").length ?? 0;
-  const upcomingMeetings = meetings?.filter((item) => item.status === "scheduled").length ?? 0;
+  const upcomingMeetings =
+    meetings?.filter((item) => {
+      const start = new Date(item.startTime);
+      return (
+        !Number.isNaN(start.getTime()) &&
+        start.getTime() >= Date.now() &&
+        (item.status === "reserved" || item.status === "scheduled")
+      );
+    }).length ?? 0;
   const eventosResumen = empresaEventosResumenQuery.data;
 
   return (
@@ -389,7 +506,8 @@ export function RoleDashboard() {
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {role !== "demandante" && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="fade-up">
           <p className="text-xs uppercase tracking-wide text-muted">Eventos inscritos</p>
           <p className="mt-2 text-3xl font-bold">
@@ -411,6 +529,28 @@ export function RoleDashboard() {
           <p className="mt-2 text-3xl font-bold">{meetingsLoading ? "..." : upcomingMeetings}</p>
         </Card>
       </div>
+      )}
+
+      {role !== "ofertante" && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="fade-up">
+          <p className="text-xs uppercase tracking-wide text-muted">Eventos inscritos</p>
+          <p className="mt-2 text-3xl font-bold">
+            {empresaEventosResumenQuery.isPending ? "..." : eventosResumen?.eventosInscritos ?? 0}
+          </p>
+        </Card>
+        <Card className="fade-up">
+          <p className="text-xs uppercase tracking-wide text-muted">Matches totales</p>
+          <p className="mt-2 text-3xl font-bold">{matchesLoading ? "..." : matches?.length ?? 0}</p>
+        </Card>
+        <Card className="fade-up">
+          <p className="text-xs uppercase tracking-wide text-muted">Reuniones programadas</p>
+          <p className="mt-2 text-3xl font-bold">{meetingsLoading ? "..." : upcomingMeetings}</p>
+        </Card>
+      </div>
+      )}
+
+      <UpcomingMeetingsSection meetings={meetings} loading={meetingsLoading} role={role} />
 
       {eventosResumen?.proximoEvento?.inscripcionesResumen ? (
         <Card className="fade-up bg-white/95">

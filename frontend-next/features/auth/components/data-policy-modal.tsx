@@ -65,7 +65,7 @@ export function DataPolicyModal({ open, onClose, onAccept }: DataPolicyModalProp
 
           <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
             <p className="font-semibold text-ink">Consulta la política completa</p>
-            <Link className="mt-2 inline-flex text-sm font-semibold text-accent hover:underline" href="/proteccion-datos">
+            <Link className="mt-2 inline-flex text-sm font-semibold text-accent hover:underline" href="/proteccion-datos" target="_blank" rel="noopener noreferrer">
               Ver información de la política de protección de datos
             </Link>
           </div>

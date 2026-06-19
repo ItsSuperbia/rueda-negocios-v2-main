@@ -30,19 +30,28 @@ export interface User {
   role: Role;
   nombreEmpresa?: string;
   logoEmpresa?: string;
+  descripcion?: string;
   sector?: string;
+  ciudad?: string;
+  pais?: string;
   formalizada?: boolean;
   nit?: string;
   rutProvisional?: string;
   documentosFormalizados?: DocumentosFormalizados;
   documentosNoFormalizados?: DocumentosNoFormalizados;
-  catalogoPDF?: string;
+  catalogoPDF?: string | CatalogoPDF | null;
   necesidadesPDF?: string;
   datosContacto?: DatosContacto;
   representante?: Representante;
   estadoRegistro?: "pendiente" | "aprobado" | "rechazado";
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface CatalogoPDF {
+  nombreArchivo: string;
+  url: string;
+  fechaCarga?: string | null;
 }
 
 export interface LoginResponse {
@@ -110,8 +119,10 @@ export interface InscripcionesResumen {
 export interface EventoInscripcionParticipante {
   _id: string;
   role: "ofertante" | "demandante";
+  estado: "activa" | "cancelada";
+  fechaCancelacion?: string;
   createdAt: string;
-  user: Pick<User, "_id" | "nombreEmpresa" | "sector" | "logoEmpresa">;
+  user: Pick<User, "_id" | "email" | "nombreEmpresa" | "sector" | "logoEmpresa" | "datosContacto" | "representante" | "estadoRegistro">;
 }
 
 export interface EventoInscripcionesResponse {
@@ -151,6 +162,7 @@ export interface MeetingEntity {
   _id: string;
   matchId?: string;
   evento?: string;
+  eventoInfo?: Pick<Evento, "_id" | "title" | "startDate" | "endDate"> | null;
   tableReservation?: string | null;
   supplierId?: string;
   buyerId?: string | null;

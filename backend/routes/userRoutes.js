@@ -8,6 +8,10 @@ const {
     updateProfile,
     deleteUser,
     getUserById,
+    uploadCatalogo,
+    deleteCatalogo,
+    downloadCatalogo,
+    getPublicSupplierProfileForEvent,
 } = require("../controllers/userController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -33,6 +37,12 @@ router.get("/profile", protect, getProfile);
 
 // ACTUALIZAR PERFIL
 router.put("/update", protect, upload.any(), validateUpdateUser, updateProfile);
+
+// CATÁLOGO COMERCIAL
+router.put("/profile/catalogo", protect, upload.single("catalogoFile"), uploadCatalogo);
+router.delete("/profile/catalogo", protect, deleteCatalogo);
+router.get("/:id/catalogo/descargar", protect, downloadCatalogo);
+router.get("/:id/eventos/:eventoId/perfil-ofertante", protect, getPublicSupplierProfileForEvent);
 
 // ELIMINAR USUARIO
 router.delete("/:id", protect, deleteUser);

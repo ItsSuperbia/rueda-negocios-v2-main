@@ -9,7 +9,8 @@ const {
     getSupplierEventWorkspace,
     reserveTable,
     getBuyerEventMarketplace,
-    reserveSession
+    reserveSession,
+    cancelSession
 } = require("../controllers/meetingController");
 
 router.post("/", protect, scheduleMeeting);
@@ -19,5 +20,6 @@ router.get("/eventos/:eventoId/ofertante", protect, getSupplierEventWorkspace);
 router.post("/eventos/:eventoId/mesas", protect, validateTableReservation, reserveTable);
 router.get("/eventos/:eventoId/demandante", protect, getBuyerEventMarketplace);
 router.post("/sesiones/:meetingId/reservar", protect, reserveSession);
+router.delete("/sesiones/:meetingId", protect, cancelSession);
 
 module.exports = router;

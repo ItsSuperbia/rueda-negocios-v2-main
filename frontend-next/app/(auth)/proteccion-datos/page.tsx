@@ -152,9 +152,7 @@ export default function ProteccionDatosPage() {
           </section>
 
           <div className="flex justify-end border-t border-slate-200 pt-4">
-            <Link className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95" href="/register">
-              Volver al registro
-            </Link>
+            
           </div>
         </Card>
       </div>

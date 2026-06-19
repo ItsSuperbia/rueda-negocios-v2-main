@@ -56,8 +56,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navLinks = useMemo(() => linksByRole[role ?? ""] ?? [], [role]);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-8xl flex-col px-4 py-4 lg:flex-row lg:gap-6 lg:px-6">
-      <aside className="rounded-xl2 bg-white/40 p-4 shadow-card ring-1 ring-slate-100 lg:sticky lg:top-6 lg:h-fit lg:w-72">
+    <div className="mx-auto flex min-h-screen w-full max-w-8xl flex-col overflow-x-hidden px-4 py-4 lg:flex-row lg:gap-6 lg:px-6">
+      <aside className="shrink-0 rounded-xl2 bg-white/40 p-4 shadow-card ring-1 ring-slate-100 lg:sticky lg:top-6 lg:h-fit lg:w-72">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">Rueda de Negocios</p>
           <h2 className="mt-1 font-[var(--font-heading)] text-xl font-bold">Panel {role}</h2>
@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Button>
       </aside>
 
-      <main className="mt-4 w-full lg:mt-0">{children}</main>
+      <main className="mt-4 min-w-0 flex-1 overflow-x-hidden lg:mt-0">{children}</main>
     </div>
   );
 }

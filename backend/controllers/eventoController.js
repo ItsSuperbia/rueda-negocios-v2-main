@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const Evento = require("../models/Evento");
 const EventoInscripcion = require("../models/EventoInscripcion");
 const Meeting = require("../models/Meeting");
+const {
+    MeetingBusinessError,
+    cancelRegistrationResources
+} = require("../services/meetingService");
 
 const empresaRoles = ["ofertante", "demandante"];
 
@@ -92,6 +96,10 @@ const attachInscripcionesResumen = async (eventos) => {
 };
 
 const canViewEventoInscripciones = async (evento, user) => {
+    if (user.role === "adminSistema") {
+        return true;
+    }
+
     if (user.role === "adminEvento" && String(evento.createdBy) === String(user.id)) {
         return true;
     }
@@ -341,7 +349,7 @@ exports.getAdminEventos = async (req, res) => {
 
         const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
         const limitNum = Math.min(20, Math.max(1, Number.parseInt(limit, 10) || 6));
-        const filters = { createdBy: userId };
+        const filters = req.user.role === "adminSistema" ? {} : { createdBy: userId };
 
         if (search) {
             filters.title = { $regex: search, $options: "i" };
@@ -707,6 +715,11 @@ exports.cancelarInscripcionEvento = async (req, res) => {
             return res.status(404).json({ message: "No tienes una inscripción activa para este evento" });
         }
 
+        const resources = await cancelRegistrationResources({
+            user: req.user,
+            eventoId: req.params.id
+        });
+
         inscripcion.estado = "cancelada";
         inscripcion.fechaCancelacion = new Date();
         await inscripcion.save();
@@ -719,9 +732,14 @@ exports.cancelarInscripcionEvento = async (req, res) => {
 
         res.json({
             message: "Inscripción cancelada correctamente",
-            evento: evento ? { ...evento, estaInscrito: false, inscripcionEstado: null } : null
+            evento: evento ? { ...evento, estaInscrito: false, inscripcionEstado: null } : null,
+            resources
         });
     } catch (error) {
+        if (error instanceof MeetingBusinessError) {
+            return res.status(error.status).json({ message: error.message });
+        }
+
         console.error("Error cancelando inscripción:", error);
         res.status(500).json({ message: "Error interno del servidor" });
     }
@@ -744,21 +762,41 @@ exports.getEventoInscripciones = async (req, res) => {
             return res.status(403).json({ message: "No autorizado para ver las inscripciones de este evento" });
         }
 
-        const { role = "todos", page = "1", limit = "10" } = req.query;
+        const { role = "todos", estado = "activa", search = "", page = "1", limit = "10" } = req.query;
         const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
         const limitNum = Math.min(50, Math.max(1, Number.parseInt(limit, 10) || 10));
 
-        const filters = { evento: evento._id, estado: "activa" };
+        const filters = { evento: evento._id };
+
+        if (estado === "activa" || estado === "cancelada") {
+            filters.estado = estado;
+        }
 
         if (role === "ofertante" || role === "demandante") {
             filters.role = role;
+        }
+
+        const trimmedSearch = String(search).trim();
+        let userIdsBySearch = null;
+
+        if (trimmedSearch) {
+            const users = await require("../models/User").find({
+                $or: [
+                    { nombreEmpresa: { $regex: trimmedSearch, $options: "i" } },
+                    { email: { $regex: trimmedSearch, $options: "i" } },
+                    { sector: { $regex: trimmedSearch, $options: "i" } },
+                    { "representante.nombre": { $regex: trimmedSearch, $options: "i" } }
+                ]
+            }).select("_id").lean();
+            userIdsBySearch = users.map((user) => user._id);
+            filters.user = { $in: userIdsBySearch };
         }
 
         const [stats, total, inscripciones] = await Promise.all([
             getInscripcionesStatsForEvento(evento._id),
             EventoInscripcion.countDocuments(filters),
             EventoInscripcion.find(filters)
-                .populate("user", "nombreEmpresa sector logoEmpresa")
+                .populate("user", "email nombreEmpresa sector logoEmpresa datosContacto representante estadoRegistro")
                 .sort({ createdAt: -1 })
                 .skip((pageNum - 1) * limitNum)
                 .limit(limitNum)
@@ -777,6 +815,69 @@ exports.getEventoInscripciones = async (req, res) => {
         });
     } catch (error) {
         console.error("Error obteniendo inscripciones:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+};
+
+exports.cancelarParticipanteEvento = async (req, res) => {
+    try {
+        const evento = await Evento.findById(req.params.id);
+
+        if (!evento) {
+            return res.status(404).json({ message: "Evento no encontrado" });
+        }
+
+        const isAdminSistema = req.user.role === "adminSistema";
+        const isOwnerAdminEvento = req.user.role === "adminEvento" && String(evento.createdBy) === String(req.user.id);
+
+        if (!isAdminSistema && !isOwnerAdminEvento) {
+            return res.status(403).json({ message: "No autorizado para gestionar participantes de este evento" });
+        }
+
+        const inscripcion = await EventoInscripcion.findOne({
+            _id: req.params.inscripcionId,
+            evento: evento._id
+        });
+
+        if (!inscripcion) {
+            return res.status(404).json({ message: "Inscripción no encontrada" });
+        }
+
+        const wasActive = inscripcion.estado === "activa";
+
+        if (wasActive) {
+            await cancelRegistrationResources({
+                user: {
+                    id: inscripcion.user,
+                    role: inscripcion.role
+                },
+                eventoId: evento._id
+            });
+
+            inscripcion.estado = "cancelada";
+            inscripcion.fechaCancelacion = new Date();
+            await inscripcion.save();
+
+            await Evento.updateOne(
+                { _id: evento._id, inscritos: { $gt: 0 } },
+                { $inc: { inscritos: -1 } }
+            );
+        }
+
+        const updatedInscripcion = await EventoInscripcion.findById(inscripcion._id)
+            .populate("user", "email nombreEmpresa sector logoEmpresa datosContacto representante estadoRegistro")
+            .lean();
+
+        res.json({
+            message: "Participación cancelada correctamente",
+            inscripcion: updatedInscripcion
+        });
+    } catch (error) {
+        if (error instanceof MeetingBusinessError) {
+            return res.status(error.status).json({ message: error.message });
+        }
+
+        console.error("Error cancelando participante:", error);
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };

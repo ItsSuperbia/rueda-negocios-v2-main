@@ -9,6 +9,8 @@ const sanitizeFilename = (name) => {
     return `${Date.now()}-${safeBase}${ext}`;
 };
 
+const maxFileSizeMb = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || process.env.MAX_CATALOG_PDF_SIZE_MB || 5);
+
 // Configuración del almacenamiento
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -36,5 +38,5 @@ const fileFilter = (req, file, cb) => {
 module.exports = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 }
+    limits: { fileSize: maxFileSizeMb * 1024 * 1024 }
 });

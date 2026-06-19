@@ -13,7 +13,8 @@ const {
     getEventoInscripciones,
     getEmpresaEventosResumen,
     inscribirseEvento,
-    cancelarInscripcionEvento
+    cancelarInscripcionEvento,
+    cancelarParticipanteEvento
 } = require("../controllers/eventoController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -32,7 +33,7 @@ router.get("/pendientes", protect, adminOnly, getEventosPendientes);
 
 // Eventos creados (adminEvento)
 router.get("/admin", protect, (req, res, next) => {
-    if (req.user.role !== "adminEvento") {
+    if (req.user.role !== "adminEvento" && req.user.role !== "adminSistema") {
         return res.status(403).json({ message: "No autorizado" });
     }
     next();
@@ -57,6 +58,7 @@ router.delete("/:id/inscripcion", protect, cancelarInscripcionEvento);
 
 // Listado de inscripciones por evento
 router.get("/:id/inscripciones", protect, getEventoInscripciones);
+router.delete("/:id/inscripciones/:inscripcionId", protect, cancelarParticipanteEvento);
 
 // Obtener un evento por ID segun rol
 router.get("/:id", protect, getEventoById);
