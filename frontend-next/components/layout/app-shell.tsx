@@ -28,7 +28,6 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/eventos", label: "Eventos" },
     { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/matches", label: "Matches"},
     { href: "/notificaciones", label: "Notificaciones" }
 
   ],

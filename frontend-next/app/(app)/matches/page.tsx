@@ -17,11 +17,4 @@ const MatchesWorkspace = dynamic(
 
 export default function MatchesPage() {
     return <MatchesWorkspace />;
-  console.log("MATCHES PAGE");
-
-  return (
-    <div>
-      <h1>MATCHES PAGE</h1>
-    </div>
-  );
 }
