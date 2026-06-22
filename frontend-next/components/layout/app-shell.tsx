@@ -36,7 +36,8 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/mensajes", label: "Mensajería" },
     { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/matches", label: "Matches" }
+    { href: "/matches", label: "Matches" },
+    { href: "/notificaciones", label: "Notificaiones" }
   ],
   demandante: [
     { href: "/dashboard", label: "Dashboard" },
@@ -44,7 +45,8 @@ const linksByRole: Record<string, NavLink[]> = {
     { href: "/mensajes", label: "Mensajería" },
     { href: "/perfil", label: "Mi perfil" },
     { href: "/reuniones", label: "Reuniones" },
-    { href: "/matches", label: "Matches" }
+    { href: "/matches", label: "Matches" },
+    { href: "/notificaciones", label: "Notificaiones" }
   ]
 };
 
