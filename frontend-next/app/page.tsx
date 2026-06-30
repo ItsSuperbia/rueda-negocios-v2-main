@@ -8,7 +8,7 @@ export default function HomePage() {
         <div className="mx-auto flex w-full max-w-[120rem] items-center justify-between px-4 py-5 lg:px-8">
           <Link className="flex items-center" href="/" aria-label="EventConnect">
             <Image
-              src="/images/icons/icon_navbar_logo_EventConnect.png"
+              src="/RuedaNegocios/images/icons/icon_navbar_logo_EventConnect.png"
               alt="EventConnect"
               width={160}
               height={40}
@@ -75,7 +75,7 @@ export default function HomePage() {
           <div className="fade-up grid gap-7 sm:grid-cols-2">
             <div className="group relative min-h-[22rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 sm:col-span-2 lg:min-h-[26rem]">
               <Image
-                src="/images/hero/hero_main_img.jpg"
+                src="/RuedaNegocios/images/hero/hero_main_img.jpg"
                 alt="Networking empresarial en rueda de negocios"
                 fill
                 priority
@@ -87,7 +87,7 @@ export default function HomePage() {
 
             <div className="group relative min-h-[16rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 lg:min-h-[18rem]">
               <Image
-                src="/images/hero/hero_sec_img_left.jpg"
+                src="/RuedaNegocios/images/hero/hero_sec_img_left.jpg"
                 alt="Cierre de acuerdos entre participantes"
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 24vw"
@@ -98,7 +98,7 @@ export default function HomePage() {
 
             <div className="group relative min-h-[16rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 lg:min-h-[18rem]">
               <Image
-                src="/images/hero/hero_sec_img_right.jpg"
+                src="/RuedaNegocios/images/hero/hero_sec_img_right.jpg"
                 alt="Centro de convenciones durante evento empresarial"
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 24vw"
@@ -130,7 +130,7 @@ export default function HomePage() {
           <div className="mt-12 space-y-8 lg:space-y-10">
             <section className="relative min-h-[18rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 lg:min-h-[20rem]">
               <Image
-                src="/images/hero/hero_serv_room_img.jpg"
+                src="/RuedaNegocios/images/hero/hero_serv_room_img.jpg"
                 alt="Reserva de espacios en centro de convenciones"
                 fill
                 sizes="100vw"
@@ -148,7 +148,7 @@ export default function HomePage() {
 
             <section className="relative min-h-[18rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 lg:min-h-[20rem]">
               <Image
-                src="/images/hero/hero_serv_reunions_img.jpg"
+                src="/RuedaNegocios/images/hero/hero_serv_reunions_img.jpg"
                 alt="Matchmaking empresarial entre empresas"
                 fill
                 sizes="100vw"
@@ -164,7 +164,7 @@ export default function HomePage() {
 
             <section className="relative min-h-[18rem] overflow-hidden rounded-xl2 shadow-card ring-1 ring-slate-200 lg:min-h-[20rem]">
               <Image
-                src="/images/hero/hero_serv_deals_img.jpg"
+                src="/RuedaNegocios/images/hero/hero_serv_deals_img.jpg"
                 alt="Agenda y reuniones empresariales con seguimiento"
                 fill
                 sizes="100vw"

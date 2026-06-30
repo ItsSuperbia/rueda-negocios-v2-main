@@ -10,7 +10,7 @@ export default function LoginPage() {
         <div className="mx-auto flex w-full max-w-[120rem] items-center justify-between px-4 py-5 lg:px-8">
           <Link className="flex items-center" href="/" aria-label="EventConnect">
             <Image
-              src="/images/icons/icon_navbar_logo_EventConnect.png"
+              src="/RuedaNegocios/images/icons/icon_navbar_logo_EventConnect.png"
               alt="EventConnect"
               width={160}
               height={40}
